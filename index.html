@@ -134,7 +134,7 @@
     </tr>
     <tr>
         <td colspan="2">持有数量</td>
-        <td colspan="2"><input type="number" value="0" id="handNumber" name="handNumber" min="0"></td>
+        <td colspan="2"><input type="number" id="handNumber" name="handNumber" min="0"></td>
     </tr>	
     <tr>
         <td colspan="2">总计</td>
@@ -241,14 +241,14 @@
         document.getElementById("enhanceCore4Remaining").textContent = enhanceCoreCost - totalEnhanceCore4Consumed;
         document.getElementById("universalCore1Remaining").textContent = universalCoreCost - totalUniversalCore1Consumed;
 		
-		let handNumber = parseInt(document.getElementById("handNumber").value);
+	let handNumber = parseInt(document.getElementById("handNumber").value);
 		
 
         totalNumber = totalSkillCore1Consumed + totalMasteryCore1Consumed + totalMasteryCore2Consumed + totalEnhanceCore1Consumed + totalEnhanceCore2Consumed + totalEnhanceCore3Consumed + totalEnhanceCore4Consumed + totalUniversalCore1Consumed + (handNumber || 0);
         totalRemaining = (skillCoreCost + (masteryCoreCost) * 2 + (enhanceCoreCost * 4) + universalCoreCost) - totalNumber;
-		if (totalRemaining < 0){
-			totalRemaining = 0;
-		}
+	if (totalRemaining < 0){
+		totalRemaining = 0;
+	}
         document.getElementById("totalNumber").textContent = totalNumber;
         document.getElementById("totalRemaining").textContent = totalRemaining;
 
