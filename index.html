@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技能计算器</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 50%;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: center;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+<h2>核心所需数量对照表</h2>
+
+<table id="coreTable">
+    <tr>
+        <th></th>
+        <th>技能核心</th>
+        <th>精通核心</th>
+        <th>强化核心</th>
+        <th>通用核心</th>
+    </tr>
+    <tr>
+        <td>6转技能数量</td>
+        <td>1</td>
+        <td>2</td>
+        <td>4</td>
+        <td>1</td>
+    </tr>
+    <tr>
+        <td>所需总计</td>
+        <td id="skillCoreTotal">4400</td>
+        <td id="masteryCoreTotal">4504</td>
+        <td id="enhanceCoreTotal">13532</td>
+        <td id="universalCoreTotal">6282</td>
+    </tr>
+    <tr>
+        <td>全部总计</td>
+        <td colspan="4" id="grandTotal">28704</td>
+    </tr>
+</table>
+
+<h2>进度计算</h2>
+
+<table id="inputTable">
+	<tr>
+        <th colspan="4">PixcelLand工会制作</th>
+    </tr>
+    <tr>
+        <th>核心种类</th>
+        <th>当前等级</th>
+        <th>已消耗数量</th>
+        <th>剩余数量</th>
+    </tr>
+    <tr>
+        <td>技能核心1</td>
+        <td><input type="number" id="skillCore1Level" name="skillCore1Level" min="1"></td>
+        <td id="skillCore1Consumed"></td>
+        <td id="skillCore1Remaining"></td>
+    </tr>
+    <tr>
+        <td>精通核心1</td>
+        <td><input type="number" id="masteryCore1Level" name="masteryCore1Level" min="1"></td>
+        <td id="masteryCore1Consumed"></td>
+        <td id="masteryCore1Remaining"></td>
+    </tr>
+    <tr>
+        <td>精通核心2</td>
+        <td><input type="number" id="masteryCore2Level" name="masteryCore2Level" min="1"></td>
+        <td id="masteryCore2Consumed"></td>
+        <td id="masteryCore2Remaining"></td>
+    </tr>
+    <tr>
+        <td>强化核心1</td>
+        <td><input type="number" id="enhanceCore1Level" name="enhanceCore1Level" min="1"></td>
+        <td id="enhanceCore1Consumed"></td>
+        <td id="enhanceCore1Remaining"></td>
+    </tr>
+    <tr>
+        <td>强化核心2</td>
+        <td><input type="number" id="enhanceCore2Level" name="enhanceCore2Level" min="1"></td>
+        <td id="enhanceCore2Consumed"></td>
+        <td id="enhanceCore2Remaining"></td>
+    </tr>
+    <tr>
+        <td>强化核心3</td>
+        <td><input type="number" id="enhanceCore3Level" name="enhanceCore3Level" min="1"></td>
+        <td id="enhanceCore3Consumed"></td>
+        <td id="enhanceCore3Remaining"></td>
+    </tr>
+    <tr>
+        <td>强化核心4</td>
+        <td><input type="number" id="enhanceCore4Level" name="enhanceCore4Level" min="1"></td>
+        <td id="enhanceCore4Consumed"></td>
+        <td id="enhanceCore4Remaining"></td>
+    </tr>
+    <tr>
+        <td>通用核心1</td>
+        <td><input type="number" id="universalCore1Level" name="universalCore1Level" min="1"></td>
+        <td id="universalCore1Consumed"></td>
+        <td id="universalCore1Remaining"></td>
+    </tr>
+    <tr>
+        <td colspan="2">总计</td>
+        <td id="totalNumber"></td>
+        <td id="totalRemaining"></td>
+    </tr>
+    <tr>
+        <td colspan="2">完成度</td>
+        <td colspan="2" id="processRate"><progress max="28704" value="0" id="processLine"/></td>
+    </tr>
+	<tr>
+        <td colspan="4" id="processRate"><button id="resetButton">重置</button></td>
+    </tr>
+</table>
+
+
+
+
+<script>
+    // 固定值
+    const skillCoreCost = 4400;
+    const masteryCoreCost = 2252;
+    const enhanceCoreCost = 3383;
+    const universalCoreCost = 6268;
+
+    // 初始化已消耗数量
+    let totalSkillCore1Consumed = 0;
+    let totalMasteryCore1Consumed = 0;
+    let totalMasteryCore2Consumed = 0;
+    let totalEnhanceCore1Consumed = 0;
+    let totalEnhanceCore2Consumed = 0;
+    let totalEnhanceCore3Consumed = 0;
+    let totalEnhanceCore4Consumed = 0;
+    let totalUniversalCore1Consumed = 0;
+    let totalNumber = 0;
+    let totalRemaining = 0;
+    let processRate = 0.0;
+
+    // 等级所需数量
+    const skillCoreLevels = {
+        1: 0, 2: 30, 3: 35, 4: 40, 5: 45, 6: 50, 7: 55, 8: 60, 9: 65, 10: 200,
+        11: 80, 12: 90, 13: 100, 14: 110, 15: 120, 16: 130, 17: 140, 18: 150, 19: 160, 20: 350,
+        21: 170, 22: 180, 23: 190, 24: 200, 25: 210, 26: 220, 27: 230, 28: 240, 29: 250, 30: 500
+    };
+
+    const masteryCoreLevels = {
+        1: 50, 2: 15, 3: 18, 4: 20, 5: 23, 6: 25, 7: 28, 8: 30, 9: 33, 10: 100,
+        11: 40, 12: 45, 13: 50, 14: 55, 15: 60, 16: 65, 17: 70, 18: 75, 19: 80, 20: 175,
+        21: 85, 22: 90, 23: 95, 24: 100, 25: 105, 26: 110, 27: 115, 28: 120, 29: 125, 30: 250
+    };
+
+    const enhanceCoreLevels = {
+        1: 75, 2: 23, 3: 27, 4: 30, 5: 34, 6: 38, 7: 42, 8: 45, 9: 49, 10: 150,
+        11: 60, 12: 68, 13: 75, 14: 83, 15: 90, 16: 98, 17: 105, 18: 113, 19: 120, 20: 263,
+        21: 128, 22: 135, 23: 143, 24: 150, 25: 158, 26: 165, 27: 173, 28: 180, 29: 188, 30: 375
+    };
+
+    const universalCoreLevels = {
+        1: 125, 2: 38, 3: 44, 4: 50, 5: 57, 6: 63, 7: 69, 8: 75, 9: 82, 10: 300,
+        11: 110, 12: 124, 13: 138, 14: 152, 15: 165, 16: 179, 17: 193, 18: 207, 19: 220, 20: 525,
+        21: 234, 22: 248, 23: 262, 24: 275, 25: 289, 26: 303, 27: 317, 28: 330, 29: 344, 30: 750
+    };
+
+    // 计算已消耗数量
+    function calculateConsumed() {
+        totalSkillCore1Consumed = calculateTotalConsumed("skillCore1Level", skillCoreLevels);
+        totalMasteryCore1Consumed = calculateTotalConsumed("masteryCore1Level", masteryCoreLevels);
+        totalMasteryCore2Consumed = calculateTotalConsumed("masteryCore2Level", masteryCoreLevels);
+        totalEnhanceCore1Consumed = calculateTotalConsumed("enhanceCore1Level", enhanceCoreLevels);
+        totalEnhanceCore2Consumed = calculateTotalConsumed("enhanceCore2Level", enhanceCoreLevels);
+        totalEnhanceCore3Consumed = calculateTotalConsumed("enhanceCore3Level", enhanceCoreLevels);
+        totalEnhanceCore4Consumed = calculateTotalConsumed("enhanceCore4Level", enhanceCoreLevels);
+        totalUniversalCore1Consumed = calculateTotalConsumed("universalCore1Level", universalCoreLevels);
+
+        document.getElementById("skillCore1Consumed").textContent = totalSkillCore1Consumed;
+        document.getElementById("masteryCore1Consumed").textContent = totalMasteryCore1Consumed;
+        document.getElementById("masteryCore2Consumed").textContent = totalMasteryCore2Consumed;
+        document.getElementById("enhanceCore1Consumed").textContent = totalEnhanceCore1Consumed;
+        document.getElementById("enhanceCore2Consumed").textContent = totalEnhanceCore2Consumed;
+        document.getElementById("enhanceCore3Consumed").textContent = totalEnhanceCore3Consumed;
+        document.getElementById("enhanceCore4Consumed").textContent = totalEnhanceCore4Consumed;
+        document.getElementById("universalCore1Consumed").textContent = totalUniversalCore1Consumed;
+    }
+
+    // 计算总消耗
+    function calculateTotalConsumed(id, coreLevels) {
+        const level = parseInt(document.getElementById(id).value);
+        let totalConsumed = 0;
+        for (let i = 1; i <= level; i++) {
+            totalConsumed += coreLevels[i] || 0;
+        }
+        return totalConsumed;
+    }
+
+    // 计算剩余数量
+    function calculateRemaining() {
+        document.getElementById("skillCore1Remaining").textContent = skillCoreCost - totalSkillCore1Consumed;
+        document.getElementById("masteryCore1Remaining").textContent = masteryCoreCost - totalMasteryCore1Consumed;
+        document.getElementById("masteryCore2Remaining").textContent = masteryCoreCost - totalMasteryCore2Consumed;
+        document.getElementById("enhanceCore1Remaining").textContent = enhanceCoreCost - totalEnhanceCore1Consumed;
+        document.getElementById("enhanceCore2Remaining").textContent = enhanceCoreCost - totalEnhanceCore2Consumed;
+        document.getElementById("enhanceCore3Remaining").textContent = enhanceCoreCost - totalEnhanceCore3Consumed;
+        document.getElementById("enhanceCore4Remaining").textContent = enhanceCoreCost - totalEnhanceCore4Consumed;
+        document.getElementById("universalCore1Remaining").textContent = universalCoreCost - totalUniversalCore1Consumed;
+
+        totalNumber = totalSkillCore1Consumed + totalMasteryCore1Consumed + totalMasteryCore2Consumed + totalEnhanceCore1Consumed + totalEnhanceCore2Consumed + totalEnhanceCore3Consumed + totalEnhanceCore4Consumed + totalUniversalCore1Consumed;
+        totalRemaining = (skillCoreCost + (masteryCoreCost) * 2 + (enhanceCoreCost * 4) + universalCoreCost) - totalNumber;
+        document.getElementById("totalNumber").textContent = totalNumber;
+        document.getElementById("totalRemaining").textContent = totalRemaining;
+
+        processRate = totalNumber / (skillCoreCost + (masteryCoreCost) * 2 + (enhanceCoreCost * 4) + universalCoreCost);
+        processRate = (processRate * 100).toFixed(2) + "%";
+
+        document.getElementById("processRate").textContent = processRate;
+		
+		
+    }
+
+    // 监听输入框的变化
+    const inputFields = document.querySelectorAll("input[type='number']");
+
+    inputFields.forEach(function(inputField) {
+        inputField.addEventListener("input", function() {
+            calculateConsumed();
+            calculateRemaining();
+        });
+    });
+
+    // 重置按钮
+    const resetButton = document.getElementById("resetButton");
+    resetButton.addEventListener("click", function() {
+        inputFields.forEach(function(inputField) {
+            inputField.value = "";
+        });
+        calculateConsumed();
+        calculateRemaining();
+    });
+
+    // 初始化
+    calculateConsumed();
+    calculateRemaining();
+</script>
+
+</body>
+</html>
