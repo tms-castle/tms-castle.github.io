@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>命运武器进度计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            margin-top: 20px;
+        }
+        /* 美观的B站链接样式 */
+        .bilibili-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #fb7299, #ff4d85);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(251, 114, 153, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bilibili-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(251, 114, 153, 0.6);
+        }
+        
+        .bilibili-link:active {
+            transform: translateY(-1px);
+        }
+        
+        .bilibili-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .bilibili-link:hover::before {
+            left: 100%;
+        }
+        
+        .bilibili-icon {
+            display: inline-block;
+            margin-right: 8px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 4px;
+            position: relative;
+            vertical-align: middle;
+        }
+        
+        .bilibili-icon::before {
+            content: '▶';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fb7299;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #fffafa;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .description {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .tables-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .table-wrapper {
+            flex: 1;
+            min-width: 400px;
+        }
+        
+        .table-title {
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+            font-size: 1.3rem;
+            margin-bottom: -1px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        
+        tr:hover {
+            background-color: #f1f1f1;
+            transition: background-color 0.3s;
+        }
+        
+        .boss-name {
+            background-color: #f7f7f7;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .difficulty {
+            text-align: left;
+            padding-left: 25px;
+        }
+        
+        .energy-value {
+            font-weight: bold;
+            color: #e74c3c;
+            font-size: 1.2rem;
+        }
+        
+        .phase-header {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .phase-energy {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        
+        .phase-boss {
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .phase-requirement {
+            text-align: left;
+            padding-left: 20px;
+        }
+        
+        /* 输入区域样式 */
+        .input-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .input-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .boss-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .boss-label {
+            flex: 1;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 0 10px;
+            font-size: 1rem;
+        }
+        
+        select {
+            flex: 2;
+        }
+        
+        input {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .refresh-section {
+            background-color: #fff4e6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #fd7e14;
+        }
+        
+        .refresh-title {
+            font-weight: bold;
+            color: #fd7e14;
+            margin-bottom: 10px;
+        }
+        
+        .refresh-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .refresh-label {
+            flex: 1;
+            font-weight: bold;
+        }
+        
+        .progress-section {
+            background-color: #e6f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #1890ff;
+        }
+        
+        .progress-title {
+            font-weight: bold;
+            color: #1890ff;
+            margin-bottom: 10px;
+        }
+        
+        .progress-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .progress-label {
+            flex: 1;
+            font-weight: bold;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .calculate-btn {
+            flex: 2;
+            padding: 12px;
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .clear-btn {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .calculate-btn:hover, .clear-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e8f4fc;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #d1e9f9;
+        }
+        
+        .result-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .result-value {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        .phase-result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 5px;
+        }
+        
+        .phase-result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .total-weeks {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(to right, #27ae60, #2ecc71);
+            color: white;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .weeks {
+            color: #fdbb2d;
+            font-weight: bold;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 900px) {
+            .tables-container {
+                flex-direction: column;
+            }
+            
+            .table-wrapper {
+                min-width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            th, td {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .boss-input, .refresh-option, .progress-input {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .boss-label, .refresh-label, .progress-label {
+                margin-bottom: 10px;
+            }
+            
+            select, input {
+                width: 100%;
+                margin: 5px 0;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+
+            .bilibili-link {
+                font-size: 1rem;
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>命运武器解封进度计算器</h1>
+        <p class="description">选择每个BOSS的难度和通关人数，计算每周获得的能量和达到各阶段所需的周数</p>
+    </header>
+    
+    <div class="container">
+        <div class="tables-container">
+            <!-- 左侧表格：敌对者的决心获取表 -->
+            <div class="table-wrapper">
+                <div class="table-title">敌对者的决心获取表</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>BOSS名称</th>
+                            <th>难度</th>
+                            <th>敌对者的决心</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 赛莲 -->
+                        <tr>
+                            <td class="boss-name" rowspan="2">
+                              <div class="image-container">
+                                <img src="./Chosen_Seren.png" alt="赛莲">
+                              </div>
+                            </td>
+                            <td class="difficulty">困难赛莲</td>
+                            <td class="energy-value">6</td>
+                        </tr>
+                        <tr>
+                            <td class="difficulty">极限赛莲</td>
+                            <td class="energy-value">80</td>
+                        </tr>
+                        
+                        <!-- 卡洛斯 -->
+                        <tr>
+                            <td class="boss-name" rowspan="3">
+                              <div class="image-container">
+                                <img src="./Kalos.png" alt="卡洛斯">
+                              </div>
+                            </td>
+                            <td class="difficulty">普通卡洛斯</td>
+                            <td class="energy-value">10</td>
+                        </tr>
+                        <tr>
+                            <td class="difficulty">困难卡洛斯</td>
+                            <td class="energy-value">70</td>
+                        </tr>
+                        <tr>
+                            <td class="difficulty">极限卡洛斯</td>
+                            <td class="energy-value">400</td>
+                        </tr>
+                        
+                        <!-- 咖琳 -->
+                        <tr>
+                            <td class="boss-name" rowspan="3">
+                              <div class="image-container">
+                                <img src="./Kaling.png" alt="咖琳">
+                              </div>
+                            </td>
+                            <td class="difficulty">普通咖琳</td>
+                            <td class="energy-value">20</td>
+                        </tr>
+                        <tr>
+                            <td class="difficulty">困难咖琳</td>
+                            <td class="energy-value">160</td>
+                        </tr>
+                        <tr>
+                            <td class="difficulty">极限咖琳</td>
+                            <td class="energy-value">1200</td>
+                        </tr>
+                        
+                        <!-- 林波 -->
+                        <tr>
+                            <td class="boss-name" rowspan="2">
+                              <div class="image-container">
+                                <img src="./Limbo.png" alt="林波">
+                              </div>
+                            </td>
+                            <td class="difficulty">普通林波</td>
+                            <td class="energy-value">120</td>
+                        </tr>
+                        <tr>
+                            <td class="difficulty">困难林波</td>
+                            <td class="energy-value">300</td>
+                        </tr>
+                        
+                        <!-- 人马 -->
+                        <tr>
+                            <td class="boss-name" rowspan="2">
+                              <div class="image-container">
+                                <img src="./Baldrix.png" alt="人马">
+                              </div>
+                            </td>
+                            <td class="difficulty">普通人马</td>
+                            <td class="energy-value">180</td>
+                        </tr>
+                        <tr>
+                            <td class="difficulty">困难人马</td>
+                            <td class="energy-value">420</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 右侧表格：阶段任务 -->
+            <div class="table-wrapper">
+                <div class="table-title">阶段任务表</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>阶段</th>
+                            <th>所需能量数</th>
+                            <th>阶段任务</th>
+                            <th>任务要求</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="phase-header">第一阶段</td>
+                            <td class="phase-energy">2000</td>
+                            <td class="phase-boss">困难赛莲</td>
+                            <td class="phase-requirement">玩家终伤减少80%</td>
+                        </tr>
+                        <tr>
+                            <td class="phase-header">第二阶段</td>
+                            <td class="phase-energy">2500</td>
+                            <td class="phase-boss">困难卡洛斯</td>
+                            <td class="phase-requirement">复活次数限定为3次</td>
+                        </tr>
+                        <tr>
+                            <td class="phase-header">第三阶段</td>
+                            <td class="phase-energy">3000</td>
+                            <td class="phase-boss">困难咖琳</td>
+                            <td class="phase-requirement">玩家终伤增加20%</td>
+                        </tr>
+                        <tr>
+                            <td class="phase-header" colspan="2">总计</td>
+                            <td class="phase-energy" colspan="2">7500</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 输入区域 -->
+        <div class="input-section">
+            <div class="input-title">选择BOSS难度和通关人数</div>
+            
+            <div class="boss-input">
+                <div class="boss-label">赛莲:</div>
+                <select id="sailian-difficulty">
+                    <option value="0">不挑战</option>
+                    <option value="6">困难赛莲 (6能量)</option>
+                    <option value="80">极限赛莲 (80能量)</option>
+                </select>
+                <input type="number" id="sailian-players" min="1" value="1" placeholder="人数">
+            </div>
+            
+            <div class="boss-input">
+                <div class="boss-label">卡洛斯:</div>
+                <select id="kalosi-difficulty">
+                    <option value="0">不挑战</option>
+                    <option value="10">普通卡洛斯 (10能量)</option>
+                    <option value="70">困难卡洛斯 (70能量)</option>
+                    <option value="400">极限卡洛斯 (400能量)</option>
+                </select>
+                <input type="number" id="kalosi-players" min="1" value="1" placeholder="人数">
+            </div>
+            
+            <div class="boss-input">
+                <div class="boss-label">咖琳:</div>
+                <select id="kalin-difficulty">
+                    <option value="0">不挑战</option>
+                    <option value="20">普通咖琳 (20能量)</option>
+                    <option value="160">困难咖琳 (160能量)</option>
+                    <option value="1200">极限咖琳 (1200能量)</option>
+                </select>
+                <input type="number" id="kalin-players" min="1" value="1" placeholder="人数">
+            </div>
+            
+            <div class="boss-input">
+                <div class="boss-label">林波:</div>
+                <select id="linbo-difficulty">
+                    <option value="0">不挑战</option>
+                    <option value="120">普通林波 (120能量)</option>
+                    <option value="300">困难林波 (300能量)</option>
+                </select>
+                <input type="number" id="linbo-players" min="1" value="1" placeholder="人数">
+            </div>
+            
+            <div class="boss-input">
+                <div class="boss-label">人马:</div>
+                <select id="renma-difficulty">
+                    <option value="0">不挑战</option>
+                    <option value="180">普通人马 (180能量)</option>
+                    <option value="420">困难人马 (420能量)</option>
+                </select>
+                <input type="number" id="renma-players" min="1" value="1" placeholder="人数">
+            </div>
+            
+            <!-- 刷新卷功能 -->
+            <div class="refresh-section">
+                <div class="refresh-title">刷新卷使用情况</div>
+                <div class="refresh-option">
+                    <div class="refresh-label">刷新赛莲:</div>
+                    <select id="refresh-sailian">
+                        <option value="0">不使用</option>
+                        <option value="6">刷新困难赛莲 (+6能量)</option>
+                    </select>
+                    <input type="number" id="refresh-sailian-players" min="1" value="1" placeholder="人数">
+                </div>
+                <div class="refresh-option">
+                    <div class="refresh-label">刷新卡洛斯:</div>
+                    <select id="refresh-kalosi">
+                        <option value="0">不使用</option>
+                        <option value="70">刷新困难卡洛斯 (+70能量)</option>
+                    </select>
+                    <input type="number" id="refresh-kalosi-players" min="1" value="1" placeholder="人数">
+                </div>
+            </div>
+            
+            <!-- 当前进度 -->
+            <div class="progress-section">
+                <div class="progress-title">当前进度</div>
+                <div class="progress-input">
+                    <div class="progress-label">当前阶段:</div>
+                    <select id="current-phase">
+                        <option value="0">第一阶段之前</option>
+                        <option value="1">第一阶段 (2000能量)</option>
+                        <option value="2">第二阶段 (2500能量)</option>
+                        <option value="3">第三阶段 (3000能量)</option>
+                    </select>
+                </div>
+                <div class="progress-input">
+                    <div class="progress-label">当前能量点数:</div>
+                    <input type="number" id="current-energy" min="0" value="0" placeholder="当前能量">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="calculate-btn" onclick="calculateEnergy()">计算能量和周数</button>
+                <button class="clear-btn" onclick="clearAllData()">清除所有数据</button>
+            </div>
+        </div>
+        
+        <!-- 结果显示区域 -->
+        <div class="results" id="results" style="display: none;">
+            <div class="result-title">计算结果</div>
+            
+            <div class="result-item">
+                <span class="result-label">每周获得能量:</span>
+                <span class="result-value" id="weekly-energy">0</span>
+            </div>
+            
+            <div class="phase-result">
+                <div class="phase-result-item">
+                    <span>达到第一阶段所需周数:</span>
+                    <span class="weeks" id="phase1-weeks">0</span>
+                </div>
+                <div class="phase-result-item">
+                    <span>达到第二阶段所需周数:</span>
+                    <span class="weeks" id="phase2-weeks">0</span>
+                </div>
+                <div class="phase-result-item">
+                    <span>达到第三阶段所需周数:</span>
+                    <span class="weeks" id="phase3-weeks">0</span>
+                </div>
+            </div>
+            
+            <div class="total-weeks" id="total-weeks">
+                完成所有阶段总周数: <span id="total-weeks-value">0</span> 周
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <p>© 2025 Castle-刃息z（艾麗亞）</p>
+    </div>
+</br>
+    <!-- B站UP主链接 -->
+    <a href="https://space.bilibili.com/264392730" class="bilibili-link" target="_blank">
+      <span class="bilibili-icon"></span>
+      小b_Official
+    </a>
+    
+
+
+    <script>
+        // 保存数据到本地存储
+        function saveData() {
+            const data = {
+                sailianDifficulty: document.getElementById('sailian-difficulty').value,
+                sailianPlayers: document.getElementById('sailian-players').value,
+                kalosiDifficulty: document.getElementById('kalosi-difficulty').value,
+                kalosiPlayers: document.getElementById('kalosi-players').value,
+                kalinDifficulty: document.getElementById('kalin-difficulty').value,
+                kalinPlayers: document.getElementById('kalin-players').value,
+                linboDifficulty: document.getElementById('linbo-difficulty').value,
+                linboPlayers: document.getElementById('linbo-players').value,
+                renmaDifficulty: document.getElementById('renma-difficulty').value,
+                renmaPlayers: document.getElementById('renma-players').value,
+                refreshSailian: document.getElementById('refresh-sailian').value,
+                refreshSailianPlayers: document.getElementById('refresh-sailian-players').value,
+                refreshKalosi: document.getElementById('refresh-kalosi').value,
+                refreshKalosiPlayers: document.getElementById('refresh-kalosi-players').value,
+                currentPhase: document.getElementById('current-phase').value,
+                currentEnergy: document.getElementById('current-energy').value
+            };
+            
+            localStorage.setItem('bossEnergyCalculatorData', JSON.stringify(data));
+        }
+        
+        // 从本地存储加载数据
+        function loadData() {
+            const savedData = localStorage.getItem('bossEnergyCalculatorData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                
+                document.getElementById('sailian-difficulty').value = data.sailianDifficulty || '0';
+                document.getElementById('sailian-players').value = data.sailianPlayers || '1';
+                document.getElementById('kalosi-difficulty').value = data.kalosiDifficulty || '0';
+                document.getElementById('kalosi-players').value = data.kalosiPlayers || '1';
+                document.getElementById('kalin-difficulty').value = data.kalinDifficulty || '0';
+                document.getElementById('kalin-players').value = data.kalinPlayers || '1';
+                document.getElementById('linbo-difficulty').value = data.linboDifficulty || '0';
+                document.getElementById('linbo-players').value = data.linboPlayers || '1';
+                document.getElementById('renma-difficulty').value = data.renmaDifficulty || '0';
+                document.getElementById('renma-players').value = data.renmaPlayers || '1';
+                document.getElementById('refresh-sailian').value = data.refreshSailian || '0';
+                document.getElementById('refresh-sailian-players').value = data.refreshSailianPlayers || '1';
+                document.getElementById('refresh-kalosi').value = data.refreshKalosi || '0';
+                document.getElementById('refresh-kalosi-players').value = data.refreshKalosiPlayers || '1';
+                document.getElementById('current-phase').value = data.currentPhase || '0';
+                document.getElementById('current-energy').value = data.currentEnergy || '0';
+            }
+        }
+        
+        // 清除所有数据
+        function clearAllData() {
+            if (confirm('确定要清除所有输入数据吗？')) {
+                localStorage.removeItem('bossEnergyCalculatorData');
+                
+                // 重置所有输入字段
+                document.getElementById('sailian-difficulty').value = '0';
+                document.getElementById('sailian-players').value = '1';
+                document.getElementById('kalosi-difficulty').value = '0';
+                document.getElementById('kalosi-players').value = '1';
+                document.getElementById('kalin-difficulty').value = '0';
+                document.getElementById('kalin-players').value = '1';
+                document.getElementById('linbo-difficulty').value = '0';
+                document.getElementById('linbo-players').value = '1';
+                document.getElementById('renma-difficulty').value = '0';
+                document.getElementById('renma-players').value = '1';
+                document.getElementById('refresh-sailian').value = '0';
+                document.getElementById('refresh-sailian-players').value = '1';
+                document.getElementById('refresh-kalosi').value = '0';
+                document.getElementById('refresh-kalosi-players').value = '1';
+                document.getElementById('current-phase').value = '0';
+                document.getElementById('current-energy').value = '0';
+                
+                // 隐藏结果区域
+                document.getElementById('results').style.display = 'none';
+                
+                alert('所有数据已清除！');
+            }
+        }
+        
+        // 页面加载时恢复数据
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            
+            // 为所有输入字段添加事件监听器，实现自动保存
+            const inputs = document.querySelectorAll('select, input');
+            inputs.forEach(input => {
+                input.addEventListener('change', saveData);
+                input.addEventListener('input', saveData);
+            });
+        });
+        
+        function calculateEnergy() {
+            // 获取每个BOSS的难度选择和人数
+            const sailianEnergy = parseInt(document.getElementById('sailian-difficulty').value);
+            const sailianPlayers = parseInt(document.getElementById('sailian-players').value) || 1;
+            
+            const kalosiEnergy = parseInt(document.getElementById('kalosi-difficulty').value);
+            const kalosiPlayers = parseInt(document.getElementById('kalosi-players').value) || 1;
+            
+            const kalinEnergy = parseInt(document.getElementById('kalin-difficulty').value);
+            const kalinPlayers = parseInt(document.getElementById('kalin-players').value) || 1;
+            
+            const linboEnergy = parseInt(document.getElementById('linbo-difficulty').value);
+            const linboPlayers = parseInt(document.getElementById('linbo-players').value) || 1;
+            
+            const renmaEnergy = parseInt(document.getElementById('renma-difficulty').value);
+            const renmaPlayers = parseInt(document.getElementById('renma-players').value) || 1;
+            
+            // 获取刷新卷使用情况
+            const refreshSailianEnergy = parseInt(document.getElementById('refresh-sailian').value);
+            const refreshSailianPlayers = parseInt(document.getElementById('refresh-sailian-players').value) || 1;
+            
+            const refreshKalosiEnergy = parseInt(document.getElementById('refresh-kalosi').value);
+            const refreshKalosiPlayers = parseInt(document.getElementById('refresh-kalosi-players').value) || 1;
+            
+            // 获取当前进度
+            const currentPhase = parseInt(document.getElementById('current-phase').value);
+            const currentEnergy = parseInt(document.getElementById('current-energy').value) || 0;
+            
+            // 检查刷新卷使用限制
+            let refreshError = false;
+            
+            // 如果已经选择了极限难度，不能使用刷新卷
+            if (refreshSailianEnergy > 0 && sailianEnergy === 80) {
+                alert("警告：您已经选择了极限赛莲，无法再使用刷新卷刷新困难赛莲！");
+                refreshError = true;
+            }
+            
+            if (refreshKalosiEnergy > 0 && kalosiEnergy === 400) {
+                alert("警告：您已经选择了极限卡洛斯，无法再使用刷新卷刷新困难卡洛斯！");
+                refreshError = true;
+            }
+            
+            if (refreshError) {
+                return;
+            }
+            
+            // 计算每个BOSS提供的能量（平分给玩家）
+            const sailianContribution = sailianEnergy > 0 ? sailianEnergy / sailianPlayers : 0;
+            const kalosiContribution = kalosiEnergy > 0 ? kalosiEnergy / kalosiPlayers : 0;
+            const kalinContribution = kalinEnergy > 0 ? kalinEnergy / kalinPlayers : 0;
+            const linboContribution = linboEnergy > 0 ? linboEnergy / linboPlayers : 0;
+            const renmaContribution = renmaEnergy > 0 ? renmaEnergy / renmaPlayers : 0;
+            
+            // 计算刷新卷提供的额外能量
+            const refreshSailianContribution = refreshSailianEnergy > 0 ? refreshSailianEnergy / refreshSailianPlayers : 0;
+            const refreshKalosiContribution = refreshKalosiEnergy > 0 ? refreshKalosiEnergy / refreshKalosiPlayers : 0;
+            
+            // 计算每周总能量
+            const weeklyEnergy = Math.floor(
+                sailianContribution + 
+                kalosiContribution + 
+                kalinContribution + 
+                linboContribution + 
+                renmaContribution +
+                refreshSailianContribution +
+                refreshKalosiContribution
+            );
+            
+            // 定义各阶段所需能量（累计值）
+            const phaseCumulativeEnergy = [0, 2000, 4500, 7500];
+            
+            // 计算达到各阶段所需的周数（考虑当前进度）
+            let phase1Weeks = 0;
+            let phase2Weeks = 0;
+            let phase3Weeks = 0;
+            let totalWeeks = 0;
+            
+            if (weeklyEnergy > 0) {
+                // 计算剩余总能量
+                const remainingEnergy = phaseCumulativeEnergy[3] - currentEnergy;
+                
+                // 计算总周数
+                totalWeeks = Math.ceil(remainingEnergy / weeklyEnergy);
+                
+                // 计算各阶段周数
+                if (currentPhase < 1) {
+                    phase1Weeks = Math.ceil((phaseCumulativeEnergy[1] - currentEnergy) / weeklyEnergy);
+                    phase2Weeks = Math.ceil((phaseCumulativeEnergy[2] - currentEnergy) / weeklyEnergy);
+                    phase3Weeks = Math.ceil((phaseCumulativeEnergy[3] - currentEnergy) / weeklyEnergy);
+                } else if (currentPhase < 2) {
+                    phase1Weeks = 0;
+                    phase2Weeks = Math.ceil((phaseCumulativeEnergy[2] - currentEnergy) / weeklyEnergy);
+                    phase3Weeks = Math.ceil((phaseCumulativeEnergy[3] - currentEnergy) / weeklyEnergy);
+                } else if (currentPhase < 3) {
+                    phase1Weeks = 0;
+                    phase2Weeks = 0;
+                    phase3Weeks = Math.ceil((phaseCumulativeEnergy[3] - currentEnergy) / weeklyEnergy);
+                }
+            }
+            
+            // 显示结果
+            document.getElementById('weekly-energy').textContent = weeklyEnergy;
+            document.getElementById('phase1-weeks').textContent = phase1Weeks + " 周";
+            document.getElementById('phase2-weeks').textContent = phase2Weeks + " 周";
+            document.getElementById('phase3-weeks').textContent = phase3Weeks + " 周";
+            document.getElementById('total-weeks-value').textContent = totalWeeks;
+            
+            // 显示结果区域
+            document.getElementById('results').style.display = 'block';
+            
+            // 保存数据
+            saveData();
+        }
+    </script>
+</body>
+</html>
