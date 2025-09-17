@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大乱斗英雄选择</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .controls {
+            padding: 15px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        #randomizeBtn {
+            background: #28a745;
+            color: white;
+        }
+
+        #randomizeBtn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .teams-container {
+            display: flex;
+            gap: 30px;
+            padding: 20px;
+            min-height: 600px;
+        }
+
+        .team-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .team-header {
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .team-a .team-header {
+            background: linear-gradient(90deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .team-b .team-header {
+            background: linear-gradient(90deg, #4ecdc4 0%, #44a08d 100%);
+        }
+
+        .pool-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px dashed #ddd;
+        }
+
+        .pool-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #495057;
+            text-align: center;
+        }
+
+        .pool-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .pool-image {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .pool-image:hover {
+            border-color: #007bff;
+            transform: scale(1.05);
+        }
+
+        .members-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .member-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .member-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .member-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .current-image-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            flex-shrink: 0;
+        }
+
+        .current-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 3px solid #eee;
+        }
+
+        .select-btn {
+            background: #007bff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .select-btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 95%;
+            max-height: 80%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 30px;
+            color: #666;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .close-modal:hover {
+            color: #000;
+        }
+
+        .modal-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .horizontal-scroll {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px;
+            max-width: 1200px;
+        }
+
+        .modal-image {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .modal-image:hover {
+            border-color: #007bff;
+            transform: scale(1.05);
+        }
+
+        .image-name {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #666;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .status-bar {
+            padding: 15px;
+            background: #e9ecef;
+            text-align: center;
+            font-weight: bold;
+            color: #495057;
+            border-top: 2px solid #dee2e6;
+        }
+
+        .no-image {
+            width: 100%;
+            height: 100%;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .image-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .selected {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>大乱斗英雄选择系统</h1>
+            <p>队伍A vs 队伍B - 英雄分配与选择</p>
+        </div>
+
+        <div class="controls">
+            <button id="randomizeBtn">随机分配英雄</button>
+        </div>
+
+        <div class="teams-container">
+            <!-- 队伍A -->
+            <div class="team-section team-a">
+                <div class="team-header">队伍A</div>
+                
+                <div class="pool-section">
+                    <div class="pool-title">队伍A - 备选英雄池</div>
+                    <div class="pool-images" id="teamAPool">
+                        <div class="no-image">暂无图片</div>
+                    </div>
+                </div>
+
+                <div class="members-container" id="teamAMembers">
+                    <!-- 成员卡片将通过JS动态生成 -->
+                </div>
+            </div>
+
+            <!-- 队伍B -->
+            <div class="team-section team-b">
+                <div class="team-header">队伍B</div>
+                
+                <div class="pool-section">
+                    <div class="pool-title">队伍B - 备选英雄池</div>
+                    <div class="pool-images" id="teamBPool">
+                        <div class="no-image">暂无图片</div>
+                    </div>
+                </div>
+
+                <div class="members-container" id="teamBMembers">
+                    <!-- 成员卡片将通过JS动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar" id="statusBar">
+            就绪 - 点击"随机分配英雄"开始
+        </div>
+    </div>
+
+    <!-- 图片选择模态框 -->
+    <div class="modal" id="imageModal">
+        <button class="close-modal" onclick="closeModal()">&times;</button>
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">选择替换英雄</div>
+            <div class="horizontal-scroll" id="modalImageGrid">
+                <!-- 模态框图片将通过JS动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 图片名称列表
+        const imageNames = [
+            "Annie.png", "Olaf.png", "Galio.png", "TwistedFate.png", "XinZhao.png",
+            "Urgot.png", "Leblanc.png", "Vladimir.png", "FiddleSticks.png", "Kayle.png",
+            "MasterYi.png", "Alistar.png", "Ryze.png", "Sion.png", "Sivir.png",
+            "Soraka.png", "Teemo.png", "Tristana.png", "Warwick.png", "Nunu.png",
+            "MissFortune.png", "Ashe.png", "Tryndamere.png", "Jax.png", "Morgana.png",
+            "Zilean.png", "Singed.png", "Evelynn.png", "Twitch.png", "Karthus.png",
+            "Chogath.png", "Amumu.png", "Rammus.png", "Anivia.png", "Shaco.png",
+            "DrMundo.png", "Sona.png", "Kassadin.png", "Irelia.png", "Janna.png",
+            "Gangplank.png", "Corki.png", "Karma.png", "Taric.png", "Veigar.png",
+            "Trundle.png", "Swain.png", "Caitlyn.png", "Blitzcrank.png", "Malphite.png",
+            "Katarina.png", "Nocturne.png", "Maokai.png", "Renekton.png", "JarvanIV.png",
+            "Elise.png", "Orianna.png", "MonkeyKing.png", "Brand.png", "LeeSin.png",
+            "Vayne.png", "Rumble.png", "Cassiopeia.png", "Skarner.png", "Heimerdinger.png",
+            "Nasus.png", "Nidalee.png", "Udyr.png", "Poppy.png", "Gragas.png",
+            "Pantheon.png", "Ezreal.png", "Mordekaiser.png", "Yorick.png", "Akali.png",
+            "Kennen.png", "Garen.png", "Leona.png", "Malzahar.png", "Talon.png",
+            "Riven.png", "KogMaw.png", "Shen.png", "Lux.png", "Xerath.png",
+            "Shyvana.png", "Ahri.png", "Graves.png", "Fizz.png", "Volibear.png",
+            "Rengar.png", "Varus.png", "Nautilus.png", "Viktor.png", "Sejuani.png",
+            "Fiora.png", "Ziggs.png", "Lulu.png", "Draven.png", "Hecarim.png",
+            "Khazix.png", "Darius.png", "Jayce.png", "Lissandra.png", "Diana.png",
+            "Quinn.png", "Syndra.png", "AurelionSol.png", "Kayn.png", "Zoe.png",
+            "Zyra.png", "Kaisa.png", "Seraphine.png", "Gnar.png", "Zac.png",
+            "Yasuo.png", "Velkoz.png", "Taliyah.png", "Camille.png", "Akshan.png",
+            "Belveth.png", "Braum.png", "Jhin.png", "Kindred.png", "Zeri.png",
+            "Jinx.png", "TahmKench.png", "Briar.png", "Viego.png", "Senna.png",
+            "Lucian.png", "Zed.png", "Kled.png", "Ekko.png", "Qiyana.png",
+            "Vi.png", "Aatrox.png", "Nami.png", "Azir.png", "Yuumi.png",
+            "Samira.png", "Thresh.png", "Illaoi.png", "RekSai.png", "Ivern.png",
+            "Kalista.png", "Bard.png", "Rakan.png", "Xayah.png", "Ornn.png",
+            "Sylas.png", "Neeko.png", "Aphelios.png", "Rell.png", "Pyke.png",
+            "Vex.png", "Yone.png", "Ambessa.png", "Mel.png", "Yunara.png",
+            "Sett.png", "Lillia.png", "Gwen.png", "Renata.png", "Aurora.png",
+            "Nilah.png", "KSante.png", "Smolder.png", "Milio.png", "Hwei.png",
+            "Naafiri.png"
+        ];
+
+        // 全局变量
+        let allImages = [];
+        let teamAImages = [];
+        let teamBImages = [];
+        let currentSelectingMember = null;
+
+        // 初始化函数
+        function initialize() {
+            // 生成完整的图片路径
+            allImages = imageNames.map(name => `image/${name}`);
+            
+            // 绑定事件监听器
+            document.getElementById('randomizeBtn').addEventListener('click', randomizeImages);
+            
+            // 初始化成员卡片
+            initializeMemberCards();
+            
+            // 更新状态栏
+            document.getElementById('statusBar').textContent = `已加载 ${allImages.length} 个英雄 - 点击"随机分配英雄"开始`;
+        }
+
+        // 初始化成员卡片
+        function initializeMemberCards() {
+            const teamAMembers = document.getElementById('teamAMembers');
+            const teamBMembers = document.getElementById('teamBMembers');
+            
+            teamAMembers.innerHTML = '';
+            teamBMembers.innerHTML = '';
+
+            // 创建队伍A的5名成员
+            for (let i = 1; i <= 5; i++) {
+                teamAMembers.appendChild(createMemberCard('A', i));
+            }
+
+            // 创建队伍B的5名成员
+            for (let i = 1; i <= 5; i++) {
+                teamBMembers.appendChild(createMemberCard('B', i));
+            }
+        }
+
+        // 创建成员卡片
+        function createMemberCard(team, number) {
+            const card = document.createElement('div');
+            card.className = 'member-card';
+            card.innerHTML = `
+                <div class="member-avatar">${number}</div>
+                <div class="member-info">
+                    <div class="member-name">成员${number}</div>
+                    <div>队伍${team}</div>
+                </div>
+                <div class="current-image-container">
+                    <div class="no-image">暂无图片</div>
+                </div>
+                <button class="select-btn" onclick="openImageSelection('team${team}', ${number})">选择</button>
+            `;
+            return card;
+        }
+
+        // 随机分配图片
+        function randomizeImages() {
+            // 从所有图片中随机选择30张
+            const selectedImages = [...allImages]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 30);
+            
+            // 将30张图片随机分成两队各15张
+            teamAImages = selectedImages.slice(0, 15);
+            teamBImages = selectedImages.slice(15, 30);
+            
+            // 为每个队员分配一张图片，剩下的放入备选池
+            distributeImages('A', teamAImages);
+            distributeImages('B', teamBImages);
+            
+            // 更新状态栏
+            document.getElementById('statusBar').textContent = '图片分配完成！';
+        }
+
+        // 分配图片到队员和备选池
+        function distributeImages(team, images) {
+            const memberImages = images.slice(0, 5); // 前5张给队员
+            const poolImages = images.slice(5);      // 后10张放入备选池
+            
+            // 更新队员图片
+            for (let i = 1; i <= 5; i++) {
+                const memberCard = document.querySelector(`#team${team}Members .member-card:nth-child(${i})`);
+                const imageContainer = memberCard.querySelector('.current-image-container');
+                
+                if (memberImages[i - 1]) {
+                    const imageName = memberImages[i - 1].split('/').pop();
+                    imageContainer.innerHTML = `
+                        <img class="current-image" src="${memberImages[i - 1]}" alt="${imageName}" 
+                             data-image="${memberImages[i - 1]}" title="${imageName}">
+                    `;
+                }
+            }
+            
+            // 更新备选池
+            const poolElement = document.getElementById(`team${team}Pool`);
+            poolElement.innerHTML = '';
+            
+            if (poolImages.length === 0) {
+                poolElement.innerHTML = '<div class="no-image">暂无图片</div>';
+                return;
+            }
+            
+            poolImages.forEach(image => {
+                const imageName = image.split('/').pop();
+                const img = document.createElement('img');
+                img.className = 'pool-image';
+                img.src = image;
+                img.alt = imageName;
+                img.title = imageName;
+                img.onclick = () => showImagePreview(image);
+                poolElement.appendChild(img);
+            });
+        }
+
+        // 打开图片选择模态框
+        function openImageSelection(team, memberNumber) {
+            if (!teamAImages.length || !teamBImages.length) {
+                alert('请先随机分配图片');
+                return;
+            }
+
+            currentSelectingMember = { team, memberNumber };
+            const modal = document.getElementById('imageModal');
+            const imageGrid = document.getElementById('modalImageGrid');
+            
+            // 设置模态框标题
+            document.getElementById('modalTitle').textContent = `为${team}成员${memberNumber}选择图片`;
+            
+            imageGrid.innerHTML = '';
+            
+            // 获取当前队伍的所有图片（只显示备选池中的图片）
+            const currentTeamImages = team === 'teamA' ? teamAImages : teamBImages;
+            const poolImages = currentTeamImages.slice(5); // 只显示备选池的10张图片
+            
+            // 获取成员当前图片
+            const memberCard = document.querySelector(`#${team}Members .member-card:nth-child(${memberNumber})`);
+            const currentImgElement = memberCard.querySelector('.current-image');
+            const currentImage = currentImgElement ? currentImgElement.dataset.image : '';
+            
+            poolImages.forEach(image => {
+                const imageName = image.split('/').pop();
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                
+                const img = document.createElement('img');
+                img.className = 'modal-image';
+                img.src = image;
+                img.alt = imageName;
+                img.title = imageName;
+                img.onclick = () => selectImageForMember(image);
+                
+                const nameSpan = document.createElement('div');
+                nameSpan.className = 'image-name';
+                nameSpan.textContent = imageName.replace('.png', '');
+                
+                imageItem.appendChild(img);
+                imageItem.appendChild(nameSpan);
+                imageGrid.appendChild(imageItem);
+            });
+            
+            modal.style.display = 'flex';
+        }
+
+        // 为成员选择图片（正确的交换逻辑）
+        function selectImageForMember(selectedImage) {
+            if (!currentSelectingMember) return;
+            
+            const { team, memberNumber } = currentSelectingMember;
+            const currentTeamImages = team === 'teamA' ? [...teamAImages] : [...teamBImages];
+            
+            // 获取成员当前图片
+            const memberCard = document.querySelector(`#${team}Members .member-card:nth-child(${memberNumber})`);
+            const currentImgElement = memberCard.querySelector('.current-image');
+            const currentImage = currentImgElement ? currentImgElement.dataset.image : '';
+            
+            if (!currentImage) return;
+            
+            // 找到当前图片和选中图片的索引位置
+            const currentImageIndex = currentTeamImages.indexOf(currentImage);
+            const selectedImageIndex = currentTeamImages.indexOf(selectedImage);
+            
+            if (currentImageIndex === -1 || selectedImageIndex === -1) return;
+            
+            // 交换图片：成员当前图片和备选图片交换位置
+            // 成员图片（前5张）和备选图片（后10张）交换
+            if (currentImageIndex < 5 && selectedImageIndex >= 5) {
+                // 交换位置
+                [currentTeamImages[currentImageIndex], currentTeamImages[selectedImageIndex]] = 
+                [currentTeamImages[selectedImageIndex], currentTeamImages[currentImageIndex]];
+                
+                // 更新队伍图片数组
+                if (team === 'teamA') {
+                    teamAImages = currentTeamImages;
+                } else {
+                    teamBImages = currentTeamImages;
+                }
+                
+                // 重新分配图片
+                distributeImages(team.replace('team', ''), currentTeamImages);
+                
+                // 关闭模态框
+                closeModal();
+                
+                // 更新状态栏
+                const imageName = selectedImage.split('/').pop().replace('.png', '');
+                document.getElementById('statusBar').textContent = 
+                    `已为${team}成员${memberNumber}更换图片为: ${imageName}`;
+            } else {
+                alert('只能选择备选池中的图片进行替换！');
+            }
+        }
+
+        // 显示图片预览
+        function showImagePreview(imageSrc) {
+            const imageName = imageSrc.split('/').pop().replace('.png', '');
+            //alert(`预览图片: ${imageName}`);
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+            currentSelectingMember = null;
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', initialize);
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('imageModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+    </script>
+</body>
+</html>
