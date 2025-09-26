@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEAM ROLL</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* 密码保护蒙版 */
+        .password-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            color: white;
+            border-radius: 15px;
+        }
+        
+        .password-form {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .password-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .password-submit {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background: #4b6cb7;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .password-submit:hover {
+            background: #3a5a9c;
+        }
+        
+        .password-error {
+            color: #ff6b6b;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        header {
+            background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .selection-info {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .selection-count {
+            color: #4b6cb7;
+            font-size: 1.3rem;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        #resetBtn {
+            background: #6c757d;
+            color: white;
+        }
+        
+        #resetBtn:hover {
+            background: #5a6268;
+        }
+        
+        #assignBtn {
+            background: #28a745;
+            color: white;
+        }
+        
+        #assignBtn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            padding: 25px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #4b6cb7;
+            border-left: 4px solid #4b6cb7;
+            padding-left: 10px;
+        }
+        
+        .people-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        
+        .person-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 80px;
+        }
+        
+        .person-card:hover {
+            border-color: #4b6cb7;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .person-card.selected {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+            transform: scale(1.02);
+        }
+        
+        .person-name {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .teams-container {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .team-section {
+            flex: 1;
+            min-width: 300px;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .team-blue {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #2196f3;
+        }
+        
+        .team-red {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border: 2px solid #f44336;
+        }
+        
+        .team-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed rgba(0, 0, 0, 0.1);
+        }
+        
+        .team-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .blue-icon {
+            background: #2196f3;
+        }
+        
+        .red-icon {
+            background: #f44336;
+        }
+        
+        .team-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        
+        .blue-title {
+            color: #1976d2;
+        }
+        
+        .red-title {
+            color: #d32f2f;
+        }
+        
+        .team-members {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .team-member {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .team-member:hover {
+            transform: translateX(5px);
+        }
+        
+        .blue-member {
+            border-left: 4px solid #2196f3;
+        }
+        
+        .red-member {
+            border-left: 4px solid #f44336;
+        }
+        
+        .empty-slot {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 12px 15px;
+            border-radius: 8px;
+            color: #999;
+            font-style: italic;
+            text-align: center;
+            border: 1px dashed #ccc;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        @media (max-width: 768px) {
+            .people-list {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+            
+            .teams-container {
+                flex-direction: column;
+            }
+            
+            .team-section {
+                min-width: 100%;
+            }
+        }
+        
+        .selection-animation {
+            animation: pulse 0.5s ease;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #333;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 密码保护蒙版 -->
+        <div class="password-mask" id="passwordMask">
+            <div class="password-form">
+                <h2 class="password-title">请输入访问密码</h2>
+                <input type="password" class="password-input" id="passwordInput" placeholder="请输入密码">
+                <button class="password-submit" id="passwordSubmit">开干</button>
+                <div class="password-error" id="passwordError">密码错误，请重新输入</div>
+            </div>
+        </div>
+        
+        <header>
+            <h1>TEAM ROLL</h1>
+            <p class="subtitle">选择10名成员，自动分配到红蓝两队</p>
+        </header>
+        
+        <div class="controls">
+            <div class="selection-info">
+                已选择: <span class="selection-count" id="selectedCount">0</span> / 10 人
+            </div>
+            <div class="buttons">
+                <button id="resetBtn">重置选择</button>
+                <button id="assignBtn" disabled>分配队伍</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="people-section">
+                <h2 class="section-title">人员名单</h2>
+                <div class="people-list" id="peopleList">
+                    <!-- 人员卡片将通过JS动态生成 -->
+                </div>
+            </div>
+            
+            <div class="teams-section">
+                <h2 class="section-title">团队分配</h2>
+                <div class="teams-container">
+                    <div class="team-section team-blue">
+                        <div class="team-header">
+                            <div class="team-icon blue-icon">蓝</div>
+                            <div class="team-title blue-title">蓝队 (5人)</div>
+                        </div>
+                        <div class="team-members" id="blueTeam">
+                            <div class="empty-slot">等待分配成员...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="team-section team-red">
+                        <div class="team-header">
+                            <div class="team-icon red-icon">红</div>
+                            <div class="team-title red-title">红队 (5人)</div>
+                        </div>
+                        <div class="team-members" id="redTeam">
+                            <div class="empty-slot">等待分配成员...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>©聚是满天星</p>
+        </footer>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // 人员名单数据
+        const peopleList = [
+            "祝家浩", "郭耀臻", "鲁杰", "王雨秋", "王主君",
+            "杨智誉", "黄贤", "王梓沣", "王冬雨", "王佳楠",
+            "徐帅", "梁硕", "贾辰", "朗思呈", "李学贤",
+            "董忠铸", "牧峰", "卢杰伦", "少说多做", "徐橙汁",
+            "林华昱", "张帅", "蓝蜗牛", "绿水灵", "火独眼"
+        ];
+        
+        // 密码设置
+        const CORRECT_PASSWORD = "聚是满天星";
+        
+        // 全局变量
+        let selectedPeople = [];
+        let blueTeam = [];
+        let redTeam = [];
+        let isAuthenticated = false;
+        
+        // DOM元素
+        const passwordMask = document.getElementById('passwordMask');
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordSubmit = document.getElementById('passwordSubmit');
+        const passwordError = document.getElementById('passwordError');
+        const peopleListElement = document.getElementById('peopleList');
+        const selectedCountElement = document.getElementById('selectedCount');
+        const resetBtn = document.getElementById('resetBtn');
+        const assignBtn = document.getElementById('assignBtn');
+        const blueTeamElement = document.getElementById('blueTeam');
+        const redTeamElement = document.getElementById('redTeam');
+        const toastElement = document.getElementById('toast');
+        
+        // 初始化函数
+        function initialize() {
+            // 检查是否已通过验证
+            checkAuthentication();
+            
+            // 绑定密码提交事件
+            passwordSubmit.addEventListener('click', checkPassword);
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkPassword();
+                }
+            });
+            
+            // 如果已通过验证，初始化应用
+            if (isAuthenticated) {
+                initApp();
+            }
+        }
+        
+        // 检查认证状态
+        function checkAuthentication() {
+            // 检查本地存储中是否有认证标记
+            const authStatus = localStorage.getItem('teamSelectorAuth');
+            if (authStatus === 'authenticated') {
+                isAuthenticated = true;
+                passwordMask.classList.add('hidden');
+            }
+        }
+        
+        // 检查密码
+        function checkPassword() {
+            const enteredPassword = passwordInput.value.trim();
+            
+            if (enteredPassword === CORRECT_PASSWORD) {
+                // 密码正确，隐藏蒙版
+                isAuthenticated = true;
+                passwordMask.classList.add('hidden');
+                localStorage.setItem('teamSelectorAuth', 'authenticated');
+                
+                // 初始化应用
+                initApp();
+            } else {
+                // 密码错误，显示错误信息
+                passwordError.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // 3秒后隐藏错误信息
+                setTimeout(() => {
+                    passwordError.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // 初始化应用
+        function initApp() {
+            // 生成人员卡片
+            renderPeopleCards();
+            
+            // 绑定事件监听器
+            resetBtn.addEventListener('click', resetSelection);
+            assignBtn.addEventListener('click', assignTeams);
+            
+            // 更新选择人数显示
+            updateSelectionCount();
+        }
+        
+        // 渲染人员卡片
+        function renderPeopleCards() {
+            peopleListElement.innerHTML = '';
+            
+            peopleList.forEach(person => {
+                const card = document.createElement('div');
+                card.className = 'person-card';
+                card.innerHTML = `
+                    <div class="person-name">${person}</div>
+                `;
+                
+                // 点击选择/取消选择
+                card.addEventListener('click', () => {
+                    toggleSelection(person, card);
+                });
+                
+                peopleListElement.appendChild(card);
+            });
+        }
+        
+        // 切换选择状态
+        function toggleSelection(person, card) {
+            const index = selectedPeople.indexOf(person);
+            
+            if (index === -1) {
+                // 如果未选择且未达到10人上限
+                if (selectedPeople.length < 10) {
+                    selectedPeople.push(person);
+                    card.classList.add('selected');
+                    card.classList.add('selection-animation');
+                    
+                    // 移除动画类
+                    setTimeout(() => {
+                        card.classList.remove('selection-animation');
+                    }, 500);
+                    
+                    showToast(`已选择: ${person}`);
+                } else {
+                    showToast('已达到10人选择上限');
+                }
+            } else {
+                // 取消选择
+                selectedPeople.splice(index, 1);
+                card.classList.remove('selected');
+                showToast(`已取消: ${person}`);
+            }
+            
+            // 更新选择人数和按钮状态
+            updateSelectionCount();
+        }
+        
+        // 更新选择人数显示
+        function updateSelectionCount() {
+            selectedCountElement.textContent = selectedPeople.length;
+            
+            // 根据选择人数更新分配按钮状态
+            if (selectedPeople.length === 10) {
+                assignBtn.disabled = false;
+            } else {
+                assignBtn.disabled = true;
+            }
+        }
+        
+        // 重置选择
+        function resetSelection() {
+            selectedPeople = [];
+            blueTeam = [];
+            redTeam = [];
+            
+            // 移除所有卡片的选中状态
+            document.querySelectorAll('.person-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // 清空团队显示
+            blueTeamElement.innerHTML = '<div class="empty-slot">等待分配成员...</div>';
+            redTeamElement.innerHTML = '<div class="empty-slot">等待分配成员...</div>';
+            
+            // 更新选择人数
+            updateSelectionCount();
+            
+            showToast('选择已重置');
+        }
+        
+        // 分配队伍
+        function assignTeams() {
+            if (selectedPeople.length !== 10) {
+                showToast('请选择10名成员');
+                return;
+            }
+            
+            // 随机打乱选择的人员
+            const shuffled = [...selectedPeople].sort(() => Math.random() - 0.5);
+            
+            // 分配前5人到蓝队，后5人到红队
+            blueTeam = shuffled.slice(0, 5);
+            redTeam = shuffled.slice(5, 10);
+            
+            // 渲染团队显示
+            renderTeams();
+            
+            showToast('团队分配完成！');
+        }
+        
+        // 渲染团队显示
+        function renderTeams() {
+            // 清空团队显示
+            blueTeamElement.innerHTML = '';
+            redTeamElement.innerHTML = '';
+            
+            // 渲染蓝队
+            blueTeam.forEach(member => {
+                const memberElement = document.createElement('div');
+                memberElement.className = 'team-member blue-member';
+                memberElement.textContent = member;
+                blueTeamElement.appendChild(memberElement);
+            });
+            
+            // 渲染红队
+            redTeam.forEach(member => {
+                const memberElement = document.createElement('div');
+                memberElement.className = 'team-member red-member';
+                memberElement.textContent = member;
+                redTeamElement.appendChild(memberElement);
+            });
+        }
+        
+        // 显示提示信息
+        function showToast(message) {
+            toastElement.textContent = message;
+            toastElement.classList.add('show');
+            
+            setTimeout(() => {
+                toastElement.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
