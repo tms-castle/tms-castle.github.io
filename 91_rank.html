@@ -85,6 +85,7 @@
             transition: all 0.3s;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             user-select: none;
+            position: relative;
         }
         
         .name-item:hover {
@@ -94,6 +95,121 @@
         
         .name-item.dragging {
             opacity: 0.5;
+        }
+        
+        /* 左侧名字的编辑按钮 */
+        .name-item .edit-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .name-item:hover .edit-btn {
+            opacity: 1;
+        }
+        
+        .name-item .edit-btn:hover {
+            background: #3db8af;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        /* 左侧名字的删除按钮 */
+        .name-item .delete-btn {
+            position: absolute;
+            right: 35px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .name-item:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        .name-item .delete-btn:hover {
+            background: #ff5252;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        /* 右侧排名名字的样式 */
+        .rank-items .name-item {
+            padding-right: 35px; /* 为删除按钮留出空间 */
+        }
+        
+        .remove-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .rank-items .name-item:hover .remove-btn {
+            opacity: 1;
+        }
+        
+        .remove-btn:hover {
+            background: #ff5252;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        /* 编辑模式样式 */
+        .name-item.editing {
+            background: #fff9c4;
+            padding-right: 15px;
+        }
+        
+        .name-item.editing .edit-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: inherit;
+            font-family: inherit;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .name-item.editing .edit-btn,
+        .name-item.editing .delete-btn {
+            display: none;
         }
         
         .rankings {
@@ -298,6 +414,10 @@
             .add-name-input {
                 min-width: auto;
             }
+            
+            .name-item .delete-btn {
+                right: 30px;
+            }
         }
     </style>
 </head>
@@ -393,11 +513,11 @@
                 "祝家浩", "郭耀臻", "鲁杰", "王雨秋", "王主君",
                 "杨智誉", "黄贤", "王梓沣", "王冬雨", "王佳楠",
                 "徐帅", "梁硕", "贾辰", "朗思呈", "李学贤",
-                "董忠铸", "牧峰", "钱裕堂", "徐橙汁", "夏凌晨",
-                "朱忠伟", "林华昱", "张帅", "张晓东", "翁捷宁", 
-                "金卡丹", "骆嘉诚", "何天下", "周弈全", "孙爽",
-                "赵鸣泽",  "骆嘉敏", "邢鹏振", "滕鸿百", "杨喻墨"
-				
+                "董忠铸", "牧峰", "卢杰伦", "钱裕堂", "徐橙汁",
+                "云澈yy", "林华昱", "张帅", "张晓东", "翁捷宁", 
+                "金卡丹", "骆嘉诚", "何天下", "周周喵", "孙爽",
+                "赵鸣泽", "夏凌晨", "骆嘉敏", "邢鹏振", "滕鸿百", 
+				"杨喻墨"
             ];
             
             // DOM元素
@@ -453,17 +573,30 @@
             function renderNameList() {
                 nameListContainer.innerHTML = '';
                 nameList.forEach(name => {
-                    createNameElement(name, nameListContainer);
+                    createNameElement(name, nameListContainer, false);
                 });
             }
             
             // 创建名字元素
-            function createNameElement(name, container) {
+            function createNameElement(name, container, isRanked = false) {
                 const nameElement = document.createElement('div');
                 nameElement.className = 'name-item';
-                nameElement.textContent = name;
+                
+                // 创建名字文本节点
+                const nameText = document.createElement('span');
+                nameText.textContent = name;
+                nameElement.appendChild(nameText);
+                
                 nameElement.draggable = true;
                 nameElement.dataset.name = name;
+                
+                // 如果是左侧未排名的名字，添加编辑和删除按钮
+                if (!isRanked) {
+                    addEditButtons(nameElement);
+                } else {
+                    // 如果是右侧排名的名字，添加移除按钮
+                    addRemoveButton(nameElement);
+                }
                 
                 // 添加拖拽事件
                 nameElement.addEventListener('dragstart', handleDragStart);
@@ -471,6 +604,167 @@
                 
                 container.appendChild(nameElement);
                 return nameElement;
+            }
+            
+            // 添加编辑按钮
+            function addEditButtons(nameElement) {
+                // 编辑按钮
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn';
+                editBtn.innerHTML = '✎';
+                editBtn.title = '编辑名字';
+                editBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    startEditing(nameElement);
+                });
+                nameElement.appendChild(editBtn);
+                
+                // 删除按钮
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.innerHTML = '×';
+                deleteBtn.title = '删除名字';
+                deleteBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    deleteName(nameElement);
+                });
+                nameElement.appendChild(deleteBtn);
+            }
+            
+            // 添加移除按钮
+            function addRemoveButton(nameElement) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerHTML = '×';
+                removeBtn.title = '移回未排名列表';
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    removeFromRanking(nameElement);
+                });
+                nameElement.appendChild(removeBtn);
+            }
+            
+            // 开始编辑名字
+            function startEditing(nameElement) {
+                const originalName = nameElement.dataset.name;
+                
+                // 切换到编辑模式
+                nameElement.classList.add('editing');
+                
+                // 创建输入框
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'edit-input';
+                input.value = originalName;
+                input.maxLength = 20;
+                
+                // 清空当前内容并添加输入框
+                nameElement.innerHTML = '';
+                nameElement.appendChild(input);
+                
+                input.focus();
+                input.select();
+                
+                // 保存编辑
+                function saveEdit() {
+                    const newName = input.value.trim();
+                    if (newName) {
+                        // 更新名字
+                        updateNameInSystem(originalName, newName);
+                    }
+                    // 无论是否修改，都退出编辑模式
+                    exitEditingMode(nameElement, newName || originalName);
+                }
+                
+                // 退出编辑模式
+                function exitEditingMode(element, name) {
+                    element.classList.remove('editing');
+                    // 重新创建正常的名字元素
+                    element.innerHTML = '';
+                    const nameText = document.createElement('span');
+                    nameText.textContent = name;
+                    element.appendChild(nameText);
+                    
+                    // 重新添加按钮和事件
+                    addEditButtons(element);
+                    element.addEventListener('dragstart', handleDragStart);
+                    element.addEventListener('dragend', handleDragEnd);
+                    element.dataset.name = name;
+                }
+                
+                // 按Enter保存
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        saveEdit();
+                    }
+                });
+                
+                // 失去焦点保存
+                input.addEventListener('blur', saveEdit);
+            }
+            
+            // 删除名字
+            function deleteName(nameElement) {
+                const name = nameElement.dataset.name;
+                if (confirm(`确定要删除名字 "${name}" 吗？`)) {
+                    // 从名单中移除
+                    const index = nameList.indexOf(name);
+                    if (index > -1) {
+                        nameList.splice(index, 1);
+                    }
+                    
+                    // 从DOM中移除
+                    nameElement.remove();
+                    
+                    // 保存更新后的名单
+                    saveNameList();
+                    
+                    // 更新状态信息
+                    updateStatusInfo();
+                }
+            }
+            
+            // 更新系统中的名字（包括所有排名区域）
+            function updateNameInSystem(oldName, newName) {
+                // 更新主名单
+                const index = nameList.indexOf(oldName);
+                if (index > -1) {
+                    nameList[index] = newName;
+                }
+                
+                // 更新所有名字元素
+                document.querySelectorAll(`[data-name="${oldName}"]`).forEach(element => {
+                    const nameText = element.querySelector('span');
+                    if (nameText) {
+                        nameText.textContent = newName;
+                    }
+                    element.dataset.name = newName;
+                });
+                
+                // 保存更新后的名单
+                saveNameList();
+            }
+            
+            // 从排名中移除名字
+            function removeFromRanking(nameElement) {
+                const name = nameElement.dataset.name;
+                
+                // 从当前排名区域移除
+                nameElement.remove();
+                
+                // 添加到左侧未排名列表
+                createNameElement(name, nameListContainer, false);
+                
+                // 更新原排名区域的空状态
+                updateEmptyState(nameElement.parentElement);
+                
+                // 更新状态信息
+                updateStatusInfo();
+            }
+            
+            // 保存名单到本地存储
+            function saveNameList() {
+                localStorage.setItem('nameList', JSON.stringify(nameList));
             }
             
             // 获取所有排名区域
@@ -533,7 +827,7 @@
                     }
                     
                     // 创建新的名字元素并添加到当前排名区域
-                    createNameElement(name, this);
+                    createNameElement(name, this, true);
                 } else {
                     // 如果是从其他排名区域拖过来的
                     // 先移除原位置的名字
@@ -543,7 +837,7 @@
                     }
                     
                     // 创建新的名字元素并添加到当前排名区域
-                    createNameElement(name, this);
+                    createNameElement(name, this, true);
                     
                     // 如果原排名区域空了，添加空状态消息
                     updateEmptyState(sourceContainer);
@@ -589,19 +883,14 @@
                     return;
                 }
                 
-                if (nameList.includes(newName)) {
-                    alert('该名字已存在！');
-                    return;
-                }
-                
-                // 添加到名单
+                // 直接添加，不检查重复
                 nameList.push(newName);
                 
                 // 保存更新后的名单
-                localStorage.setItem('nameList', JSON.stringify(nameList));
+                saveNameList();
                 
                 // 添加到左侧列表
-                createNameElement(newName, nameListContainer);
+                createNameElement(newName, nameListContainer, false);
                 
                 // 清空输入框
                 newNameInput.value = '';
@@ -627,7 +916,7 @@
                 
                 // 保存到本地存储
                 localStorage.setItem('rankings', JSON.stringify(rankings));
-                localStorage.setItem('nameList', JSON.stringify(nameList));
+                saveNameList();
                 localStorage.setItem('saveTime', new Date().toLocaleString());
                 
                 alert('排名已保存！下次打开页面时会自动加载。');
@@ -659,7 +948,7 @@
                     
                     if (rankings[rankTitle] && rankings[rankTitle].length > 0) {
                         rankings[rankTitle].forEach(name => {
-                            createNameElement(name, container);
+                            createNameElement(name, container, true);
                         });
                     } else {
                         // 如果没有名字，添加空状态消息
@@ -674,7 +963,7 @@
                 const allRankedNames = Object.values(rankings).flat();
                 nameList.forEach(name => {
                     if (!allRankedNames.includes(name)) {
-                        createNameElement(name, nameListContainer);
+                        createNameElement(name, nameListContainer, false);
                     }
                 });
                 
