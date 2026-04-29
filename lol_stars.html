@@ -282,7 +282,7 @@
 
             const stats = getHeroStats();
             const hs = Object.values(stats);
-            document.getElementById('statCoreHero').innerText = `${totalWinRate ? totalWinRate : 0}%`;
+            document.getElementById('statCoreHero').innerText = `${totalWinRate}%`;
             document.getElementById('coreHeroes').innerHTML = hs.filter(h => h.name != "212" && h.winRate >= 70 && h.count >= 2).sort((a,b)=>b.count-a.count).slice(0,5).map(h=>`<div class="flex justify-between bg-slate-900/50 p-3 rounded-lg text-sm border-l-4 border-blue-500"><span>${h.name}</span><span class="text-blue-400 font-bold">${h.winRate}%</span></div>`).join('');
             document.getElementById('trashHeroes').innerHTML = hs.filter(h => h.winRate < 50 && h.count >= 1).sort((a,b)=>a.winRate-b.winRate).slice(0,5).map(h=>`<div class="flex justify-between bg-slate-900/50 p-3 rounded-lg text-sm border-l-4 border-red-500"><span>${h.name}</span><span class="text-red-400 font-bold">${h.winRate}%</span></div>`).join('');
             renderHomeChart();
