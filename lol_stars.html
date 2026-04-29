@@ -278,7 +278,7 @@
             pEl.className = `text-xl font-mono font-bold ${mProfit >= 0 ? 'text-green-400' : 'text-red-400'}`;
 
             const winCount = records.filter(r => r.amount >= 0).length;
-            const totalWinRate = (winCount / mProfit) * 100;
+            const totalWinRate = mProfit > 0 ? ((winCount / mProfit) * 100).toFixed(2) : "0.00";;
 
             const stats = getHeroStats();
             const hs = Object.values(stats);
