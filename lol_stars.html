@@ -53,7 +53,7 @@
                             <p class="text-xl font-mono font-bold" id="statMonthProfit">¥ 0.00</p>
                         </div>
                         <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
-                            <p class="text-xs text-slate-500 uppercase">T0英雄数量</p>
+                            <p class="text-xs text-slate-500 uppercase">总胜率</p>
                             <p class="text-xl font-bold text-yellow-400" id="statCoreHero">0</p>
                         </div>
                     </div>
@@ -276,10 +276,13 @@
             const pEl = document.getElementById('statMonthProfit');
             pEl.innerText = `${mProfit > 0 ? '+' : ''}${mProfit.toFixed(2)}`;
             pEl.className = `text-xl font-mono font-bold ${mProfit >= 0 ? 'text-green-400' : 'text-red-400'}`;
-            
+
+            const winCount = records.filter(r => r.amount >= 0).length;
+            const totalWinRate = (winCount / mProfit) * 100;
+
             const stats = getHeroStats();
             const hs = Object.values(stats);
-            document.getElementById('statCoreHero').innerText = hs.filter(h => h.winRate >= 80 && h.count >= 3).length;
+            document.getElementById('statCoreHero').innerText = `${totalWinRate ? totalWinRate : 0}%`;
             document.getElementById('coreHeroes').innerHTML = hs.filter(h => h.name != "212" && h.winRate >= 70 && h.count >= 2).sort((a,b)=>b.count-a.count).slice(0,5).map(h=>`<div class="flex justify-between bg-slate-900/50 p-3 rounded-lg text-sm border-l-4 border-blue-500"><span>${h.name}</span><span class="text-blue-400 font-bold">${h.winRate}%</span></div>`).join('');
             document.getElementById('trashHeroes').innerHTML = hs.filter(h => h.winRate < 50 && h.count >= 1).sort((a,b)=>a.winRate-b.winRate).slice(0,5).map(h=>`<div class="flex justify-between bg-slate-900/50 p-3 rounded-lg text-sm border-l-4 border-red-500"><span>${h.name}</span><span class="text-red-400 font-bold">${h.winRate}%</span></div>`).join('');
             renderHomeChart();
