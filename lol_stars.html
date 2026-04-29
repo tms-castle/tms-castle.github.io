@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>红包局 Pro - 数据中心 v3.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        .page { display: none; }
+        .page.active { display: block; }
+        .nav-active { border-bottom: 3px solid #60a5fa; color: #60a5fa; background: #1e293b; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        select { -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E"); background-position: right .5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
+
+    <nav class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex overflow-x-auto scrollbar-hide">
+            <button onclick="switchPage('home')" class="nav-btn px-6 py-4 font-bold whitespace-nowrap transition nav-active" id="btn-home">🏠 总览录入</button>
+            <button onclick="switchPage('details')" class="nav-btn px-6 py-4 font-bold whitespace-nowrap transition" id="btn-details">📜 每日明细</button>
+            <button onclick="switchPage('income')" class="nav-btn px-6 py-4 font-bold whitespace-nowrap transition" id="btn-income">📅 月度收入</button>
+            <button onclick="switchPage('heroes')" class="nav-btn px-6 py-4 font-bold whitespace-nowrap transition" id="btn-heroes">⚔️ 英雄池分析</button>
+            <button onclick="switchPage('settings')" class="nav-btn px-6 py-4 font-bold whitespace-nowrap transition" id="btn-settings">⚙️ 数据管理</button>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto p-4 md:p-6">
+
+        <div id="page-home" class="page active space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-4 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                    <h2 class="text-xl font-bold mb-4 text-blue-400">✚ 新增记录</h2>
+                    <div class="space-y-4">
+                        <input id="dateInp" type="date" class="w-full bg-slate-900 border border-slate-600 rounded-xl p-3 outline-none focus:border-blue-500 transition">
+                        <input id="heroInp" type="text" placeholder="输入英雄(如: 劫)" class="w-full bg-slate-900 border border-slate-600 rounded-xl p-3 outline-none focus:border-blue-500 transition">
+                        <input id="amountInp" type="number" step="0.01" placeholder="红包金额(发包填负数)" class="w-full bg-slate-900 border border-slate-600 rounded-xl p-3 outline-none focus:border-blue-500 transition">
+                        <button onclick="saveRecord()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-black text-lg transition transform active:scale-95">保存对局</button>
+                    </div>
+                </div>
+                <div class="lg:col-span-8 space-y-6">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                            <p class="text-xs text-slate-500 uppercase">当前余额</p>
+                            <p class="text-xl font-mono font-bold text-green-400" id="totalBalance">¥ 0.00</p>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                            <p class="text-xs text-slate-500 uppercase">总局数</p>
+                            <p class="text-xl font-bold text-blue-400" id="statTotalCount">0</p>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                            <p class="text-xs text-slate-500 uppercase">本月盈亏</p>
+                            <p class="text-xl font-mono font-bold" id="statMonthProfit">¥ 0.00</p>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                            <p class="text-xs text-slate-500 uppercase">T0英雄数量</p>
+                            <p class="text-xl font-bold text-yellow-400" id="statCoreHero">0</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 h-[300px] relative">
+                        <h3 class="absolute top-4 left-6 text-sm font-bold text-slate-400">📈 近30天每日收入趋势</h3>
+                        <div id="homeTrendChart" class="w-full h-full mt-2"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                    <h3 class="font-bold text-blue-400 mb-4 flex items-center">🔥 核心英雄池 (场次优先，胜率辅助)</h3>
+                    <div id="coreHeroes" class="space-y-2"></div>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                    <h3 class="font-bold text-red-400 mb-4 flex items-center">⚠️ 避坑英雄池 (胜率堪忧)</h3>
+                    <div id="trashHeroes" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-details" class="page space-y-4">
+            <div class="flex flex-wrap gap-4 items-center bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                <select id="filterDateSelect" onchange="renderDetails()" class="bg-slate-900 p-3 rounded-lg border border-slate-600 outline-none min-w-[150px] cursor-pointer">
+                    <option value="">所有日期</option>
+                </select>
+                <button onclick="toggleNegativeFilter()" id="btnNegativeFilter" class="bg-slate-700 text-slate-300 px-4 py-3 rounded-lg hover:bg-red-900/50 hover:text-red-400 transition font-bold">📉 只看发包日(负收入)</button>
+            </div>
+            <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-700/50 text-slate-400 text-sm">
+                        <tr>
+                            <th class="p-4">日期</th>
+                            <th class="p-4">当日局数</th>
+                            <th class="p-4">当日总净收入</th>
+                            <th class="p-4">状态</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="page-income" class="page space-y-6">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">📅 月度每日收入流水</h2>
+                    <select id="incomeMonthSelect" onchange="renderIncomePage()" class="bg-slate-900 p-3 rounded-lg border border-slate-600 outline-none font-bold cursor-pointer">
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div id="incomeBarChart" class="h-[400px]"></div>
+                    <div class="overflow-y-auto max-h-[400px] space-y-2 pr-2" id="dailySummaryList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-heroes" class="page space-y-6">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <button onclick="renderHeroAnalysis('count')" class="bg-slate-700 px-4 py-2 rounded-lg hover:bg-blue-600 transition font-bold focus:bg-blue-600">按总场次排序</button>
+                    <button onclick="renderHeroAnalysis('winrate')" class="bg-slate-700 px-4 py-2 rounded-lg hover:bg-emerald-600 transition font-bold focus:bg-emerald-600">按高胜率排序</button>
+                    <button onclick="renderHeroAnalysis('profit')" class="bg-slate-700 px-4 py-2 rounded-lg hover:bg-yellow-600 transition font-bold focus:bg-yellow-600">按总收益排序</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead class="bg-slate-700/50 text-slate-400 text-sm">
+                            <tr>
+                                <th class="p-4 rounded-tl-lg">英雄</th>
+                                <th class="p-4">总场次</th>
+                                <th class="p-4">胜/负</th>
+                                <th class="p-4">胜率</th>
+                                <th class="p-4 rounded-tr-lg">累计打出红包</th>
+                            </tr>
+                        </thead>
+                        <tbody id="heroTableBody" class="text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-settings" class="page space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                    <h2 class="text-xl font-bold mb-4 text-emerald-400">📤 导出备份</h2>
+                    <p class="text-slate-400 text-sm mb-4">将数据导出为 JSON 文件，建议每周备份一次，避免数据丢失。</p>
+                    <button onclick="exportData()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-bold transition">导出 .json 文件</button>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                    <h2 class="text-xl font-bold mb-4 text-blue-400">📥 导入数据</h2>
+                    <p class="text-slate-400 text-sm mb-4">选择之前导出的 JSON 文件来还原你的战绩数据。</p>
+                    <input type="file" id="importFile" accept=".json" class="hidden" onchange="importJSON(this)">
+                    <button onclick="document.getElementById('importFile').click()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">选择文件并导入</button>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                <h2 class="text-xl font-bold mb-4 text-yellow-400">🛠️ 批量同步历史 (从 Markdown)</h2>
+                <textarea id="mdInput" rows="6" placeholder="格式：&#10;### 2026-04-28&#10;1. 5.72 霞&#10;2. -6.00 劫" class="w-full bg-slate-900 border border-slate-600 rounded-xl p-4 font-mono text-sm outline-none focus:border-yellow-500 transition mb-4"></textarea>
+                <button onclick="parseMarkdownImport()" class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-xl font-bold transition">识别并合并到现有数据</button>
+            </div>
+
+            <div class="bg-red-900/10 p-6 rounded-2xl border border-red-900/50">
+                <h2 class="text-xl font-bold mb-4 text-red-500 flex items-center">🧨 危险区域 (清空数据)</h2>
+                <p class="text-red-400/80 text-sm mb-4">如果你发现导入的数据有误，或者想重新开始记录，可以一键清空所有缓存。</p>
+                <button onclick="clearAllData()" class="w-full bg-red-800/80 hover:bg-red-600 text-white py-3 rounded-xl font-bold transition border border-red-700">⚠️ 彻底清空所有战绩记录</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4">
+        <div class="bg-slate-800 w-full max-w-lg rounded-2xl border border-slate-700 overflow-hidden shadow-2xl transform transition-all">
+            <div class="bg-slate-700/50 p-4 border-b border-slate-700 flex justify-between items-center">
+                <h3 id="modalTitle" class="font-bold text-lg text-blue-400"></h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl font-bold px-2">✕</button>
+            </div>
+            <div id="modalContent" class="p-4 max-h-[60vh] overflow-y-auto space-y-1"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 全局状态 ---
+        let records = JSON.parse(localStorage.getItem('lol_data_v2') || '[]');
+        const BASE_AMOUNT = 2330.14;
+        let isNegativeFilter = false;
+
+        function saveRecord() {
+            const date = document.getElementById('dateInp').value;
+            const hero = document.getElementById('heroInp').value.trim();
+            const amount = parseFloat(document.getElementById('amountInp').value);
+            if(!date || !hero || isNaN(amount)) return alert("请完整填写记录！");
+            
+            records.push({ id: Date.now(), date, hero, amount });
+            saveAndRefresh();
+            
+            document.getElementById('heroInp').value = '';
+            document.getElementById('amountInp').value = '';
+        }
+
+        // 初始化所有下拉框
+        function initSelects() {
+            const dateSet = new Set();
+            const monthSet = new Set();
+            records.forEach(r => {
+                dateSet.add(r.date);
+                monthSet.add(r.date.substring(0,7));
+            });
+
+            // 填充日期过滤框
+            const dateSelect = document.getElementById('filterDateSelect');
+            const currentFilter = dateSelect.value;
+            dateSelect.innerHTML = '<option value="">所有日期</option>' + 
+                [...dateSet].sort().reverse().map(d => `<option value="${d}">${d}</option>`).join('');
+            if([...dateSet].includes(currentFilter)) dateSelect.value = currentFilter;
+
+            // 填充月份过滤框
+            const monthSelect = document.getElementById('incomeMonthSelect');
+            const currentMonth = monthSelect.value || new Date().toISOString().substring(0,7);
+            const months = [...monthSet].sort().reverse();
+            // 如果没数据，给个当月默认值
+            if(months.length === 0) months.push(currentMonth);
+            monthSelect.innerHTML = months.map(m => `<option value="${m}">${m}</option>`).join('');
+            if(months.includes(currentMonth)) monthSelect.value = currentMonth;
+            else monthSelect.selectedIndex = 0;
+        }
+
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            document.getElementById('btn-' + pageId).classList.add('nav-active');
+            refreshCurrentPage();
+        }
+
+        function refreshCurrentPage() {
+            initSelects();
+            const activePage = document.querySelector('.page.active').id;
+            if(activePage === 'page-home') renderHomePage();
+            if(activePage === 'page-details') renderDetails();
+            if(activePage === 'page-income') renderIncomePage();
+            if(activePage === 'page-heroes') renderHeroAnalysis();
+        }
+
+        // --- 页面1：总览 ---
+        function renderHomePage() {
+            // 基本统计
+            const totalProfit = records.reduce((s, r) => s + r.amount, 0);
+            document.getElementById('totalBalance').innerText = `¥ ${(BASE_AMOUNT + totalProfit).toFixed(2)}`;
+            document.getElementById('statTotalCount').innerText = records.length;
+            
+            // 本月盈亏
+            const currentMonthStr = new Date().toISOString().substring(0,7);
+            const monthProfit = records.filter(r => r.date.startsWith(currentMonthStr)).reduce((s, r) => s + r.amount, 0);
+            const profitEl = document.getElementById('statMonthProfit');
+            profitEl.innerText = `${monthProfit > 0 ? '+' : ''}${monthProfit.toFixed(2)}`;
+            profitEl.className = `text-xl font-mono font-bold ${monthProfit >= 0 ? 'text-green-400' : 'text-red-400'}`;
+
+            // 英雄池计算
+            const stats = getHeroStats();
+            const heroes = Object.values(stats);
+            document.getElementById('statCoreHero').innerText = heroes.filter(h => h.winRate >= 80 && h.count >= 3).length;
+
+            // 核心英雄排序（场次优先，胜率辅助）
+            document.getElementById('coreHeroes').innerHTML = heroes
+                .filter(h => h.winRate >= 70 && h.count >= 2)
+                .sort((a,b) => {
+                    if (b.count !== a.count) return b.count - a.count;
+                    return b.winRate - a.winRate; 
+                })
+                .slice(0, 5).map(h => `<div class="flex justify-between bg-slate-900/50 p-3 rounded-lg text-sm border-l-4 border-blue-500 hover:bg-slate-700 transition"><span><span class="font-bold text-base">${h.name}</span> <span class="text-slate-400 text-xs ml-1">(${h.count}场)</span></span><span class="text-blue-400 font-bold">${h.winRate}%</span></div>`).join('');
+
+            // 避坑英雄池
+            document.getElementById('trashHeroes').innerHTML = heroes
+                .filter(h => h.winRate < 50 && h.count >= 1)
+                .sort((a,b) => a.winRate - b.winRate)
+                .slice(0, 5).map(h => `<div class="flex justify-between bg-slate-900/50 p-3 rounded-lg text-sm border-l-4 border-red-500 hover:bg-slate-700 transition"><span><span class="font-bold text-base">${h.name}</span> <span class="text-slate-400 text-xs ml-1">(${h.count}场)</span></span><span class="text-red-400 font-bold">${h.winRate}%</span></div>`).join('');
+
+            renderHomeChart();
+        }
+
+        // 图表：近30天每日收入趋势
+        function renderHomeChart() {
+            const chart = echarts.init(document.getElementById('homeTrendChart'), 'dark');
+            const dailyMap = {};
+            records.forEach(r => { dailyMap[r.date] = (dailyMap[r.date] || 0) + r.amount; });
+            
+            const sortedDates = Object.keys(dailyMap).sort().slice(-30);
+            const chartData = sortedDates.map(d => dailyMap[d].toFixed(2));
+
+            chart.setOption({
+                backgroundColor: 'transparent',
+                tooltip: { trigger: 'axis', formatter: '{b} <br/> 日收入: ¥{c}' },
+                xAxis: { type: 'category', data: sortedDates, axisLabel: { color: '#94a3b8', formatter: val => val.substring(5) } },
+                yAxis: { type: 'value', splitLine: { lineStyle: { color: '#334155' } } },
+                series: [{ 
+                    data: chartData, 
+                    type: 'line', 
+                    smooth: true, 
+                    areaStyle: { opacity: 0.2 }, 
+                    itemStyle: { color: '#10b981' },
+                    lineStyle: { width: 3 }
+                }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        // --- 页面2：每日明细 ---
+        function toggleNegativeFilter() {
+            isNegativeFilter = !isNegativeFilter;
+            const btn = document.getElementById('btnNegativeFilter');
+            if(isNegativeFilter) {
+                btn.classList.replace('bg-slate-700', 'bg-red-900');
+                btn.classList.replace('text-slate-300', 'text-red-400');
+            } else {
+                btn.classList.replace('bg-red-900', 'bg-slate-700');
+                btn.classList.replace('text-red-400', 'text-slate-300');
+            }
+            renderDetails();
+        }
+
+        function renderDetails() {
+            const dateFilter = document.getElementById('filterDateSelect').value;
+            
+            // 按天汇总
+            const dayMap = {};
+            records.forEach(r => {
+                if(!dayMap[r.date]) dayMap[r.date] = { date: r.date, amount: 0, count: 0 };
+                dayMap[r.date].amount += r.amount;
+                dayMap[r.date].count++;
+            });
+
+            let displayDays = Object.values(dayMap).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            // 应用筛选
+            if(dateFilter) displayDays = displayDays.filter(d => d.date === dateFilter);
+            if(isNegativeFilter) displayDays = displayDays.filter(d => d.amount < 0);
+
+            if(displayDays.length === 0) {
+                document.getElementById('detailTable').innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500">未找到相关对局数据</td></tr>`;
+                return;
+            }
+
+            document.getElementById('detailTable').innerHTML = displayDays.map(d => `
+                <tr onclick="showDayDetail('${d.date}')" class="border-b border-slate-700/50 hover:bg-slate-700/50 transition cursor-pointer group">
+                    <td class="p-4 text-sm font-bold group-hover:text-blue-400">${d.date}</td>
+                    <td class="p-4 text-sm text-slate-400">${d.count} 局</td>
+                    <td class="p-4 font-mono font-bold ${d.amount >= 0 ? 'text-green-400' : 'text-red-400'} text-lg">${d.amount > 0 ? '+' : ''}${d.amount.toFixed(2)}</td>
+                    <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${d.amount >= 0 ? 'bg-green-900/30 text-green-500' : 'bg-red-900/30 text-red-500'}">${d.amount >= 0 ? '盈利' : '出血'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // --- 页面3：收入统计 ---
+        function renderIncomePage() {
+            const targetMonth = document.getElementById('incomeMonthSelect').value;
+            if(!targetMonth) return;
+
+            const dailyMap = {};
+            records.filter(r => r.date.startsWith(targetMonth)).forEach(r => {
+                dailyMap[r.date] = (dailyMap[r.date] || 0) + r.amount;
+            });
+
+            const sortedDates = Object.keys(dailyMap).sort();
+            const chartData = sortedDates.map(d => dailyMap[d].toFixed(2));
+
+            const chart = echarts.init(document.getElementById('incomeBarChart'), 'dark');
+            chart.setOption({
+                backgroundColor: 'transparent',
+                xAxis: { type: 'category', data: sortedDates.map(d => d.split('-')[2] + '日') },
+                yAxis: { type: 'value', splitLine: { lineStyle: { color: '#334155' } } },
+                tooltip: { trigger: 'axis' },
+                series: [{ data: chartData, type: 'bar', borderRadius: [4,4,0,0], itemStyle: { color: (p) => p.value >= 0 ? '#10b981' : '#ef4444' } }]
+            });
+
+            document.getElementById('dailySummaryList').innerHTML = sortedDates.reverse().map(d => `
+                <div onclick="showDayDetail('${d}')" class="flex justify-between items-center bg-slate-700/30 p-4 rounded-xl cursor-pointer hover:bg-slate-700 hover:ring-2 ring-slate-500 transition">
+                    <span class="font-bold">${d}</span>
+                    <span class="font-mono font-bold text-lg ${dailyMap[d] >=0 ? 'text-green-400' : 'text-red-400'}">${dailyMap[d] > 0 ? '+' : ''}${dailyMap[d].toFixed(2)}</span>
+                </div>
+            `).join('');
+        }
+
+        // --- 页面4：英雄池表格化 ---
+        function renderHeroAnalysis(sortBy = 'count') {
+            const stats = Object.values(getHeroStats());
+            if(sortBy === 'count') stats.sort((a,b) => b.count - a.count || b.winRate - a.winRate);
+            if(sortBy === 'winrate') stats.sort((a,b) => b.winRate - a.winRate || b.count - a.count);
+            if(sortBy === 'profit') stats.sort((a,b) => b.profit - a.profit);
+
+            document.getElementById('heroTableBody').innerHTML = stats.map(h => `
+                <tr onclick="showHeroDetail('${h.name}')" class="border-b border-slate-700/50 hover:bg-slate-700/50 transition cursor-pointer group">
+                    <td class="p-4 font-bold text-base group-hover:text-blue-400">${h.name}</td>
+                    <td class="p-4 text-slate-300">${h.count}</td>
+                    <td class="p-4 text-xs"><span class="text-green-400">${h.wins}胜</span> / <span class="text-slate-500">${h.count - h.wins}负</span></td>
+                    <td class="p-4 font-mono font-bold ${h.winRate >= 60 ? 'text-emerald-400' : (h.winRate < 50 ? 'text-red-400' : 'text-slate-300')}">${h.winRate}%</td>
+                    <td class="p-4 font-mono font-bold ${h.profit >= 0 ? 'text-green-400' : 'text-red-400'}">${h.profit > 0 ? '+' : ''}${h.profit.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // --- 通用与数据管理逻辑 ---
+        function getHeroStats() {
+            const s = {};
+            records.forEach(r => {
+                if(!s[r.hero]) s[r.hero] = { name: r.hero, count: 0, wins: 0, profit: 0 };
+                s[r.hero].count++;
+                s[r.hero].profit += r.amount;
+                if(r.amount > 0) s[r.hero].wins++;
+            });
+            Object.values(s).forEach(h => h.winRate = Math.round((h.wins/h.count)*100));
+            return s;
+        }
+
+        function showDayDetail(date) {
+            const dayRecords = records.filter(r => r.date === date);
+            const total = dayRecords.reduce((s, r)=> s+r.amount, 0);
+            openModal(`🗓️ ${date} 对局明细 <span class="text-sm ml-2 ${total>=0?'text-green-400':'text-red-400'}">总计: ${total>0?'+':''}${total.toFixed(2)}</span>`, 
+            dayRecords.map(r => `
+                <div class="flex justify-between items-center py-3 border-b border-slate-700/50 px-2 hover:bg-slate-700/30 rounded">
+                    <span class="font-bold text-lg">${r.hero}</span>
+                    <span class="font-mono font-bold text-lg ${r.amount >=0 ? 'text-green-400' : 'text-red-400'}">${r.amount > 0 ? '+' : ''}${r.amount.toFixed(2)}</span>
+                </div>
+            `).join(''));
+        }
+
+        function showHeroDetail(heroName) {
+            const heroRecords = records.filter(r => r.hero === heroName).reverse();
+            openModal(`⚔️ 【${heroName}】历史表现`, heroRecords.map(r => `
+                <div class="flex justify-between items-center py-3 border-b border-slate-700/50 px-2 hover:bg-slate-700/30 rounded">
+                    <span class="text-slate-400 text-sm">${r.date}</span>
+                    <span class="font-mono font-bold text-lg ${r.amount >=0 ? 'text-green-400' : 'text-red-400'}">${r.amount > 0 ? '+' : ''}${r.amount.toFixed(2)}</span>
+                </div>
+            `).join(''));
+        }
+
+        function openModal(title, content) {
+            document.getElementById('modalTitle').innerHTML = title;
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+        // Markdown 解析
+        function parseMarkdownImport() {
+            const text = document.getElementById('mdInput').value;
+            const lines = text.split('\n');
+            let currentDate = ''; let count = 0;
+
+            lines.forEach(line => {
+                const dateMatch = line.match(/(\d{4}-\d{2}-\d{2})/);
+                if (dateMatch) currentDate = dateMatch[1];
+                
+                const detailMatch = line.match(/^\d+\.\s+(-?\d+\.?\d*)\s+([\u4e00-\u9fa5a-zA-Z0-9]+)/);
+                if (detailMatch && currentDate) {
+                    const amount = parseFloat(detailMatch[1]);
+                    const hero = detailMatch[2];
+                    if (!records.some(r => r.date === currentDate && r.hero === hero && r.amount === amount)) {
+                        records.push({ id: Date.now() + count, date: currentDate, hero, amount });
+                        count++;
+                    }
+                }
+            });
+
+            if (count > 0) {
+                saveAndRefresh();
+                alert(`成功识别并导入 ${count} 条新记录！`);
+                document.getElementById('mdInput').value = '';
+            } else alert("未识别到新记录，请检查格式。");
+        }
+
+        // 保存并刷新
+        function saveAndRefresh() {
+            records.sort((a,b) => new Date(a.date) - new Date(b.date));
+            localStorage.setItem('lol_data_v2', JSON.stringify(records));
+            refreshCurrentPage();
+        }
+
+        // 导出 JSON
+        function exportData() {
+            const blob = new Blob([JSON.stringify(records, null, 2)], {type: "application/json"});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `lol_redpack_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        // 导入 JSON
+        function importJSON(input) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported) && confirm("导入将覆盖或追加数据，建议先导出备份，确定继续吗？")) {
+                        records = imported; // 直接覆盖
+                        saveAndRefresh();
+                        alert("JSON 数据导入成功！");
+                        input.value = ""; // 清空 input 状态，允许重复导入同一个文件
+                    }
+                } catch (err) { alert("JSON 文件格式错误"); }
+            };
+            reader.readAsText(input.files[0]);
+        }
+
+        // 【新增】一键清空数据功能
+        function clearAllData() {
+            const warningMsg = "⚠️ 警告：这将会永久清空当前浏览器的所有战绩记录！\n\n- 如果你还没有备份，请先点击上方的【导出 .json 文件】。\n- 此操作不可恢复！\n\n确定要彻底清空吗？";
+            if (confirm(warningMsg)) {
+                records = []; // 将记录数组置空
+                localStorage.setItem('lol_data_v2', JSON.stringify(records)); // 更新本地存储
+                alert("🧹 所有数据已清空。您可以开始导入全新的数据了。");
+                refreshCurrentPage(); // 刷新 UI
+            }
+        }
+
+        window.onload = () => {
+            document.getElementById('dateInp').valueAsDate = new Date();
+            initSelects();
+            renderHomePage();
+        };
+    </script>
+</body>
+</html>
