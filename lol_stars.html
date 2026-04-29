@@ -227,6 +227,16 @@
                 </div>
             `).join(''));
         }
+		
+		function showHeroDetail(heroName) {
+            const heroRecords = records.filter(r => r.hero === heroName).reverse();
+            openModal(`⚔️ 【${heroName}】历史表现`, heroRecords.map(r => `
+                <div class="flex justify-between items-center py-3 border-b border-slate-700/50 px-2 hover:bg-slate-700/30 rounded">
+                    <span class="text-slate-400 text-sm">${r.date}</span>
+                    <span class="font-mono font-bold text-lg ${r.amount >=0 ? 'text-green-400' : 'text-red-400'}">${r.amount > 0 ? '+' : ''}${r.amount.toFixed(2)}</span>
+                </div>
+            `).join(''));
+        }
 
         // 下面是通用的图表和 UI 切换函数（逻辑同前版本）
         function switchPage(pageId) {
@@ -270,7 +280,7 @@
             const stats = getHeroStats();
             const hs = Object.values(stats);
             document.getElementById('statCoreHero').innerText = hs.filter(h => h.winRate >= 80 && h.count >= 3).length;
-            document.getElementById('coreHeroes').innerHTML = hs.filter(h => h.winRate >= 70 && h.count >= 2).sort((a,b)=>b.count-a.count).slice(0,5).map(h=>`<div class="flex justify-between bg-slate-900/50 p-3 rounded-lg text-sm border-l-4 border-blue-500"><span>${h.name}</span><span class="text-blue-400 font-bold">${h.winRate}%</span></div>`).join('');
+            document.getElementById('coreHeroes').innerHTML = hs.filter(h => h.name != "212" && h.winRate >= 70 && h.count >= 2).sort((a,b)=>b.count-a.count).slice(0,5).map(h=>`<div class="flex justify-between bg-slate-900/50 p-3 rounded-lg text-sm border-l-4 border-blue-500"><span>${h.name}</span><span class="text-blue-400 font-bold">${h.winRate}%</span></div>`).join('');
             document.getElementById('trashHeroes').innerHTML = hs.filter(h => h.winRate < 50 && h.count >= 1).sort((a,b)=>a.winRate-b.winRate).slice(0,5).map(h=>`<div class="flex justify-between bg-slate-900/50 p-3 rounded-lg text-sm border-l-4 border-red-500"><span>${h.name}</span><span class="text-red-400 font-bold">${h.winRate}%</span></div>`).join('');
             renderHomeChart();
         }
@@ -346,7 +356,7 @@
             if(sortBy === 'winrate') stats.sort((a,b) => b.winRate - a.winRate);
             if(sortBy === 'profit') stats.sort((a,b) => b.profit - a.profit);
             document.getElementById('heroTableBody').innerHTML = stats.map(h => `
-                <tr class="border-b border-slate-700/50">
+                <tr  onclick="showHeroDetail('${h.name}')" class="border-b border-slate-700/50 hover:bg-slate-700/50 transition cursor-pointer group">
                     <td class="p-4 font-bold ${h.name === '212' ? 'text-slate-500 italic' : ''}">${h.name}</td>
                     <td class="p-4">${h.count}</td>
                     <td class="p-4">${h.wins}胜/${h.count-h.wins}负</td>
