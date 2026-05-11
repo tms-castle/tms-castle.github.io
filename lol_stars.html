@@ -353,13 +353,27 @@
             monthTotalBalance.innerText = `${thisMonthProfit > 0 ? '+' : ''}${thisMonthProfit.toFixed(2)}`;
 		}
 
-        function renderHeroAnalysis(sortBy = 'count') {
+		function renderHeroAnalysis(sortBy = 'count') {
             const stats = Object.values(getHeroStats());
-            if(sortBy === 'count') stats.sort((a,b) => b.count - a.count);
-            if(sortBy === 'winrate') stats.sort((a,b) => b.winRate - a.winRate);
-            if(sortBy === 'profit') stats.sort((a,b) => b.profit - a.profit);
+            
+            if(sortBy === 'count') {
+                // 按总场次排序：主场次(降序)，次胜率(降序)
+                stats.sort((a,b) => b.count - a.count || b.winRate - a.winRate);
+            } else if(sortBy === 'winrate') {
+                // 【重点修改】按高胜率排序：主胜率(降序)，次场次(降序)
+                stats.sort((a, b) => {
+                    if (b.winRate !== a.winRate) {
+                        return b.winRate - a.winRate; // 第一排序：胜率
+                    }
+                    return b.count - a.count; // 第二排序：场次
+                });
+            } else if(sortBy === 'profit') {
+                // 按总收益排序：主收益(降序)，次场次(降序)
+                stats.sort((a,b) => b.profit - a.profit || b.count - a.count);
+            }
+
             document.getElementById('heroTableBody').innerHTML = stats.map(h => `
-                <tr  onclick="showHeroDetail('${h.name}')" class="border-b border-slate-700/50 hover:bg-slate-700/50 transition cursor-pointer group">
+                <tr onclick="showHeroDetail('${h.name}')" class="border-b border-slate-700/50 hover:bg-slate-700/50 transition cursor-pointer group">
                     <td class="p-4 font-bold ${h.name === '212' ? 'text-slate-500 italic' : ''}">${h.name}</td>
                     <td class="p-4">${h.count}</td>
                     <td class="p-4">${h.wins}胜/${h.count-h.wins}负</td>
